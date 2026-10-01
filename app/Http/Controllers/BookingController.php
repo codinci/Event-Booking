@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Enums\EventStatus;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -17,6 +18,33 @@ class BookingController extends Controller
         private readonly BookingService $bookingService,
     ) {}
 
+    public function create(Event $event): Response
+    {
+        abort_unless(
+            $event->status === EventStatus::Published,
+            404
+        );
+
+        $event->load([
+            'ticketTypes:id,event_id,name,price,quantity,available_quantity',
+        ]);
+
+        return Inertia::render('Bookings/Create', [
+            'event' => [
+                'id' => $event->id,
+                'title' => $event->title,
+                'venue' => $event->venue,
+                'starts_at' => $event->starts_at,
+                'ends_at' => $event->ends_at,
+                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
+                    'id' => $ticketType->id,
+                    'name' => $ticketType->name,
+                    'price' => $ticketType->price,
+                    'available_quantity' => $ticketType->available_quantity,
+                ])->values(),
+            ],
+        ]);
+    }
     public function store(Request $request, Event $event): RedirectResponse
     {
         $validated = $request->validate([
