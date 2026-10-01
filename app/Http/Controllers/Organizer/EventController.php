@@ -9,6 +9,9 @@ use Inertia\Response;
 use App\Models\Event;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
+
 class EventController extends Controller
 {
     public function index(): Response
@@ -30,20 +33,12 @@ class EventController extends Controller
         return Inertia::render('Organizer/Events/Create');
     }
 
-    public function store(Request $request)
+    public function store(StoreEventRequest $request)
     {
         $this->authorize('create', Event::class);
 
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'venue' => ['required', 'string', 'max:255'],
-            'starts_at' => ['required', 'date'],
-            'ends_at' => ['required', 'date', 'after:starts_at'],
-        ]);
-
         $event = Event::create([
-            ...$validated,
+            ...$request->validated(),
             'organizer_id' => $request->user()->id,
         ]);
 
@@ -61,25 +56,17 @@ class EventController extends Controller
         ]);
     }
 
-    public function update(Request $request, Event $event)
+    public function update(UpdateEventRequest $request, Event $event)
     {
         $this->authorize('update', $event);
 
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'venue' => ['required', 'string', 'max:255'],
-            'starts_at' => ['required', 'date'],
-            'ends_at' => ['required', 'date', 'after:starts_at'],
-        ]);
-
-        $event->update($validated);
+        $event->update($request->validated());
 
         return redirect()
             ->route('organizer.events.index')
             ->with('success', 'Event updated successfully.');
     }
-
+    
     public function destroy(Event $event)
     {
         $this->authorize('delete', $event);

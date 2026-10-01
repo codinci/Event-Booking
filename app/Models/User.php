@@ -57,4 +57,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return $this->hasMany(Event::class, 'organizer_id');
     }
+
+    public function isOrganizer(): bool
+    {
+        return $this->role === UserRole::Organizer;
+    }
 }
