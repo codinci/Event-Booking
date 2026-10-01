@@ -86,14 +86,14 @@ const formatPrice = (price: number) => {
         </section>
 
         <main class="mx-auto max-w-6xl px-4 py-8">
-            <div class="mb-8">
-                <input
-                    v-model="search"
-                    type="search"
-                    placeholder="Search events or venues..."
-                    class="w-full rounded-lg border border-orange-200 bg-white px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-                />
-            </div>
+           	<div class="mb-8">
+				<input
+					v-model="search"
+					type="search"
+					placeholder="Search events or venues..."
+					class="w-full rounded-lg border border-orange-200 bg-white px-4 py-3 text-[#2d2926] placeholder:text-[#9a918a] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+				/>
+			</div>
 
             <div
                 v-if="filteredEvents.length"
