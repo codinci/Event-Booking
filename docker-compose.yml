@@ -1,0 +1,129 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: event-booking-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - vendor:/var/www/vendor
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - event-booking
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: event-booking-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - event-booking
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: event-booking-queue
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work database --sleep=3 --tries=3 --timeout=90
+    volumes:
+      - ./:/var/www
+      - vendor:/var/www/vendor
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - event-booking
+
+
+  vite:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: event-booking-vite
+    working_dir: /var/www
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/var/www
+      - vendor:/var/www/vendor
+      - node_modules:/var/www/node_modules
+    depends_on:
+      - app
+    networks:
+      - event-booking
+
+  mysql:
+    image: mysql:8.4
+    container_name: event-booking-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "event_booking",
+          "-pevent_booking_password"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - event-booking
+
+  redis:
+    image: redis:7-alpine
+    container_name: event-booking-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - event-booking
+
+networks:
+  event-booking:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  vendor:
+  node_modules:
