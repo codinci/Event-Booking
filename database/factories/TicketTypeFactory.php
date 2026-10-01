@@ -17,11 +17,7 @@ class TicketTypeFactory extends Factory
 
         return [
             'event_id' => Event::factory(),
-            'name' => fake()->randomElement([
-                'Early Bird',
-                'Regular',
-                'VIP',
-            ]),
+            'name' => 'Regular',
             'price' => fake()->randomFloat(2, 500, 10000),
             'quantity' => $quantity,
             'available_quantity' => $quantity,
