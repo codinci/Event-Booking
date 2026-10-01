@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import PublicHeader from '@/components/PublicHeader.vue';
+
 
 interface TicketType {
     id: number;
@@ -66,6 +68,7 @@ const formatPrice = (price: number) => {
 
 <template>
     <div class="min-h-screen bg-orange-50">
+		<PublicHeader />
         <section class="bg-orange-500 px-4 py-16 text-white">
             <div class="mx-auto max-w-6xl">
                 <p class="mb-2 text-sm font-semibold uppercase tracking-wider">
