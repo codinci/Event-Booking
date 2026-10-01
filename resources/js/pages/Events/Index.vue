@@ -107,6 +107,22 @@ const formatPrice = (price: number) => {
                     <div class="h-3 bg-orange-500" />
 
                     <div class="p-6">
+						<!-- Event Image -->
+						<div class="mb-5 overflow-hidden rounded-lg">
+							<img
+								v-if="event.image_url"
+								:src="event.image_url"
+								:alt="event.title"
+								class="h-48 w-full object-cover transition duration-300 hover:scale-105"
+							/>
+
+							<div
+								v-else
+								class="flex h-48 w-full items-center justify-center rounded-lg bg-orange-100 text-sm text-orange-500"
+							>
+								No image available
+							</div>
+						</div>
                         <h2 class="text-xl font-bold text-gray-900">
                             {{ event.title }}
                         </h2>

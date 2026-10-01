@@ -31,6 +31,8 @@ class EventController extends Controller
                 'title' => $event->title,
                 'description' => $event->description,
                 'venue' => $event->venue,
+                'image_url' => $event->image_url,
+                'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
                 'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
@@ -81,6 +83,8 @@ class EventController extends Controller
                 'title' => $event->title,
                 'description' => $event->description,
                 'venue' => $event->venue,
+                'image_url' => $event->image_url,
+                'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
                 'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [

@@ -39,6 +39,14 @@ const formatDate = (date: string) => {
     }).format(new Date(date));
 };
 
+const formatTime = (date: string) => {
+    return new Date(date).toLocaleTimeString('en-KE', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    })
+};
+
 const formatPrice = (price: string | number) => {
     return new Intl.NumberFormat('en-KE', {
         style: 'currency',
@@ -77,14 +85,36 @@ const formatPrice = (price: string | number) => {
                                 <p class="text-sm font-medium text-gray-900">
                                     Date
                                 </p>
-                                <p>{{ formatDate(event.starts_at) }}</p>
+
+                                <p>
+                                    {{ formatDate(event.starts_at) }}
+                                </p>
                             </div>
 
-                            <div v-if="event.venue">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                    Time
+                                </p>
+
+                                <p>
+                                    {{ formatTime(event.starts_at) }}
+                                    -
+                                    {{ formatTime(event.ends_at) }}
+                                </p>
+                            </div>
+
+                            <div v-if="event.venue || event.location">
                                 <p class="text-sm font-medium text-gray-900">
                                     Venue
                                 </p>
-                                <p>{{ event.venue }}</p>
+
+                                <p v-if="event.venue">
+                                    {{ event.venue }}
+                                </p>
+
+                                <p v-if="event.location" class="text-sm text-gray-600">
+                                    {{ event.location }}
+                                </p>
                             </div>
 
                             <div v-if="event.description">
