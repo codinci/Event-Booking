@@ -30,9 +30,6 @@ Route::get('/events/{event}', [EventController::class, 'show'])
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')
-        ->name('dashboard');
-
     Route::get('/events/{event}/book', [BookingController::class, 'create'])
         ->name('bookings.create');
 
@@ -49,7 +46,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'organizer'])
+// Dashboard keeps the plain `dashboard` route name the starter kit expects,
+// so it lives in its own group without the `organizer.` name prefix.
+Route::middleware(['auth', 'verified', 'organizer'])->group(function () {
+    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+});
+
+Route::middleware(['auth', 'verified', 'organizer'])
     ->prefix('organizer')
     ->name('organizer.')
     ->group(function () {

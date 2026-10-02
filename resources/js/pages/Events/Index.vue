@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import PublicHeader from '@/components/PublicHeader.vue';
+import TopBar from '@/components/TopBar.vue';
 
 
 interface TicketType {
@@ -67,9 +67,11 @@ const formatPrice = (price: number) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-orange-50">
-		<PublicHeader />
-        <section class="bg-orange-500 px-4 py-16 text-white">
+    <div class="min-h-screen bg-surface text-foreground">
+        <TopBar />
+
+        <!-- Hero (solid coral in both themes so white text stays readable) -->
+        <section class="bg-[#e9784f] px-4 py-16 text-white">
             <div class="mx-auto max-w-6xl">
                 <p class="mb-2 text-sm font-semibold uppercase tracking-wider">
                     Discover events
@@ -79,21 +81,21 @@ const formatPrice = (price: number) => {
                     Find your next event
                 </h1>
 
-                <p class="mt-4 max-w-2xl text-orange-100">
+                <p class="mt-4 max-w-2xl text-white/85">
                     Browse upcoming events and reserve your tickets online.
                 </p>
             </div>
         </section>
 
         <main class="mx-auto max-w-6xl px-4 py-8">
-           	<div class="mb-8">
-				<input
-					v-model="search"
-					type="search"
-					placeholder="Search events or venues..."
-					class="w-full rounded-lg border border-orange-200 bg-white px-4 py-3 text-[#2d2926] placeholder:text-[#9a918a] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-				/>
-			</div>
+            <div class="mb-8">
+                <input
+                    v-model="search"
+                    type="search"
+                    placeholder="Search events or venues..."
+                    class="w-full rounded-lg border border-line bg-card px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-brand focus:ring-2 focus:ring-brand/30"
+                />
+            </div>
 
             <div
                 v-if="filteredEvents.length"
@@ -102,45 +104,46 @@ const formatPrice = (price: number) => {
                 <article
                     v-for="event in filteredEvents"
                     :key="event.id"
-                    class="overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm"
+                    class="overflow-hidden rounded-xl border border-line bg-card shadow-sm"
                 >
-                    <div class="h-3 bg-orange-500" />
+                    <div class="h-3 bg-brand" />
 
                     <div class="p-6">
-						<!-- Event Image -->
-						<div class="mb-5 overflow-hidden rounded-lg">
-							<img
-								v-if="event.image_url"
-								:src="event.image_url"
-								:alt="event.title"
-								class="h-48 w-full object-cover transition duration-300 hover:scale-105"
-							/>
+                        <!-- Event Image -->
+                        <div class="mb-5 overflow-hidden rounded-lg">
+                            <img
+                                v-if="event.image_url"
+                                :src="event.image_url"
+                                :alt="event.title"
+                                class="h-48 w-full object-cover transition duration-300 hover:scale-105"
+                            />
 
-							<div
-								v-else
-								class="flex h-48 w-full items-center justify-center rounded-lg bg-orange-100 text-sm text-orange-500"
-							>
-								No image available
-							</div>
-						</div>
-                        <h2 class="text-xl font-bold text-gray-900">
+                            <div
+                                v-else
+                                class="flex h-48 w-full items-center justify-center rounded-lg bg-brand/10 text-sm text-brand"
+                            >
+                                No image available
+                            </div>
+                        </div>
+
+                        <h2 class="text-xl font-bold text-foreground">
                             {{ event.title }}
                         </h2>
 
                         <p
                             v-if="event.venue"
-                            class="mt-2 text-sm text-gray-600"
+                            class="mt-2 text-sm text-muted-foreground"
                         >
                             {{ event.venue }}
                         </p>
 
-                        <p class="mt-2 text-sm text-gray-600">
+                        <p class="mt-2 text-sm text-muted-foreground">
                             {{ formatDate(event.starts_at) }}
                         </p>
 
                         <p
                             v-if="event.description"
-                            class="mt-4 line-clamp-3 text-sm text-gray-600"
+                            class="mt-4 line-clamp-3 text-sm text-muted-foreground"
                         >
                             {{ event.description }}
                         </p>
@@ -149,20 +152,20 @@ const formatPrice = (price: number) => {
                             class="mt-6 flex items-center justify-between gap-4"
                         >
                             <div>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-muted-foreground">
                                     Starting from
                                 </p>
 
                                 <p
                                     v-if="lowestPrice(event) !== null"
-                                    class="font-semibold text-orange-600"
+                                    class="font-semibold text-brand"
                                 >
                                     {{ formatPrice(lowestPrice(event)!) }}
                                 </p>
 
                                 <p
                                     v-else
-                                    class="text-sm text-gray-500"
+                                    class="text-sm text-muted-foreground"
                                 >
                                     No tickets
                                 </p>
@@ -170,14 +173,14 @@ const formatPrice = (price: number) => {
 
                             <span
                                 v-if="!hasTickets(event)"
-                                class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+                                class="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
                             >
                                 Sold out
                             </span>
 
                             <Link
                                 :href="`/events/${event.id}`"
-                                class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+                                class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-hover"
                             >
                                 View event
                             </Link>
@@ -188,16 +191,17 @@ const formatPrice = (price: number) => {
 
             <div
                 v-else
-                class="rounded-xl border border-dashed border-orange-200 bg-white px-6 py-16 text-center"
+                class="rounded-xl border border-dashed border-line bg-card px-6 py-16 text-center"
             >
-                <h2 class="text-xl font-semibold text-gray-900">
+                <h2 class="text-xl font-semibold text-foreground">
                     No events found
                 </h2>
 
-                <p class="mt-2 text-gray-500">
+                <p class="mt-2 text-muted-foreground">
                     Try a different search term.
                 </p>
             </div>
         </main>
     </div>
 </template>
+    

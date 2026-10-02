@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use App\Enums\UserRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,10 +23,17 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
-        
+
         $middleware->alias([
             'organizer' => \App\Http\Middleware\OrganizerMiddleware::class,
         ]);
+
+        $middleware->redirectUsersTo(fn (Request $request) =>
+            $request->user()?->role === UserRole::Organizer
+                ? route('dashboard')
+                : route('events.index')
+        );
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
