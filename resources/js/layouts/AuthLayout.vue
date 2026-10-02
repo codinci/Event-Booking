@@ -8,7 +8,16 @@ const { title = '', description = '' } = defineProps<{
 </script>
 
 <template>
-    <AuthLayout :title="title" :description="description">
-        <slot />
-    </AuthLayout>
+    <div
+        class="flex min-h-svh items-center justify-center bg-[#fffaf5] px-4 py-4"
+    >
+        <div class="w-full max-w-md">
+            <AuthLayout
+                :title="title"
+                :description="description"
+            >
+                <slot />
+            </AuthLayout>
+        </div>
+    </div>
 </template>

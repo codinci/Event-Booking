@@ -26,6 +26,7 @@ defineOptions({
 <template>
     <Head title="Confirm password" />
 
+    <!-- Passkeys -->
     <!-- @chisel-passkeys -->
     <PasskeyVerify
         :routes="{
@@ -42,32 +43,41 @@ defineOptions({
         v-bind="store.form()"
         reset-on-success
         v-slot="{ errors, processing }"
+        class="flex flex-col gap-4"
     >
-        <div class="space-y-6">
-            <div class="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+        <div class="grid gap-4">
+            <!-- Password -->
+            <div class="grid gap-1">
+                <Label
+                    htmlFor="password"
+                    class="text-sm font-medium text-[#2d2926]"
+                >
+                    Password
+                </Label>
+
                 <PasswordInput
                     id="password"
                     name="password"
-                    class="mt-1 block w-full"
                     required
                     autocomplete="current-password"
                     autofocus
+                    placeholder="Enter your password"
+                    class="border-[#eadfd4] bg-[#fffaf5] text-[#2d2926] placeholder:text-[#9a918a] focus:border-[#e9784f] focus:ring-[#f4c9b8]"
                 />
 
                 <InputError :message="errors.password" />
             </div>
 
-            <div class="flex items-center">
-                <Button
-                    class="w-full"
-                    :disabled="processing"
-                    data-test="confirm-password-button"
-                >
-                    <Spinner v-if="processing" />
-                    Confirm password
-                </Button>
-            </div>
+            <!-- Confirm -->
+            <Button
+                type="submit"
+                class="h-9 w-full bg-[#e9784f] text-sm font-semibold text-white hover:bg-[#d9653d]"
+                :disabled="processing"
+                data-test="confirm-password-button"
+            >
+                <Spinner v-if="processing" />
+                Confirm password
+            </Button>
         </div>
     </Form>
 </template>

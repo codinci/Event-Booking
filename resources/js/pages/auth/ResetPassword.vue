@@ -33,52 +33,78 @@ const inputEmail = ref(props.email);
         :transform="(data) => ({ ...data, token, email })"
         :reset-on-success="['password', 'password_confirmation']"
         v-slot="{ errors, processing }"
+        class="flex flex-col gap-4"
     >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email</Label>
+        <div class="grid gap-4">
+            <!-- Email -->
+            <div class="grid gap-1">
+                <Label
+                    for="email"
+                    class="text-sm font-medium text-[#2d2926]"
+                >
+                    Email
+                </Label>
+
                 <Input
                     id="email"
                     type="email"
                     name="email"
                     autocomplete="email"
                     v-model="inputEmail"
-                    class="mt-1 block w-full"
                     readonly
+                    class="h-9 border-[#eadfd4] bg-[#f7f0ea] text-sm text-[#625b55] focus:border-[#e9784f] focus:ring-[#f4c9b8]"
                 />
-                <InputError :message="errors.email" class="mt-2" />
+
+                <InputError :message="errors.email" />
             </div>
 
-            <div class="grid gap-2">
-                <Label for="password">Password</Label>
+            <!-- Password -->
+            <div class="grid gap-1">
+                <Label
+                    for="password"
+                    class="text-sm font-medium text-[#2d2926]"
+                >
+                    Password
+                </Label>
+
                 <PasswordInput
                     id="password"
                     name="password"
                     autocomplete="new-password"
-                    class="mt-1 block w-full"
                     autofocus
                     placeholder="Password"
                     :passwordrules="passwordRules"
+                    class="border-[#eadfd4] bg-[#fffaf5] text-[#2d2926] placeholder:text-[#9a918a] focus:border-[#e9784f] focus:ring-[#f4c9b8]"
                 />
+
                 <InputError :message="errors.password" />
             </div>
 
-            <div class="grid gap-2">
-                <Label for="password_confirmation"> Confirm password </Label>
+            <!-- Confirm password -->
+            <div class="grid gap-1">
+                <Label
+                    for="password_confirmation"
+                    class="text-sm font-medium text-[#2d2926]"
+                >
+                    Confirm password
+                </Label>
+
                 <PasswordInput
                     id="password_confirmation"
                     name="password_confirmation"
                     autocomplete="new-password"
-                    class="mt-1 block w-full"
                     placeholder="Confirm password"
                     :passwordrules="passwordRules"
+                    class="border-[#eadfd4] bg-[#fffaf5] text-[#2d2926] placeholder:text-[#9a918a] focus:border-[#e9784f] focus:ring-[#f4c9b8]"
                 />
+
                 <InputError :message="errors.password_confirmation" />
             </div>
 
+            <!-- Submit -->
             <Button
                 type="submit"
-                class="mt-4 w-full"
+                class="h-9 w-full bg-[#e9784f] text-sm font-semibold text-white hover:bg-[#d9653d]"
                 :disabled="processing"
                 data-test="reset-password-button"
             >

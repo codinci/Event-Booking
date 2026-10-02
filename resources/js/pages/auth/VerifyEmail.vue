@@ -22,26 +22,41 @@ defineProps<{
 <template>
     <Head title="Email verification" />
 
-    <div
-        v-if="status === 'verification-link-sent'"
-        class="mb-4 text-center text-sm font-medium text-green-600"
-    >
-        A new verification link has been sent to the email address you provided
-        during registration.
+    <div class="space-y-4">
+        <!-- Success message -->
+        <div
+            v-if="status === 'verification-link-sent'"
+            class="rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-center text-sm font-medium text-green-700"
+        >
+            A new verification link has been sent to the email address you
+            provided during registration.
+        </div>
+
+        <Form
+            v-bind="send.form()"
+            class="flex flex-col gap-4"
+            v-slot="{ processing }"
+        >
+            <Button
+                type="submit"
+                :disabled="processing"
+                class="h-9 w-full bg-[#e9784f] text-sm font-semibold text-white hover:bg-[#d9653d]"
+            >
+                <Spinner v-if="processing" />
+                Resend verification email
+            </Button>
+
+            <div
+                class="border-t border-[#eadfd4] pt-3 text-center"
+            >
+                <TextLink
+                    :href="logout()"
+                    as="button"
+                    class="text-sm font-semibold text-[#e05f35] hover:text-[#d4512b]"
+                >
+                    Log out
+                </TextLink>
+            </div>
+        </Form>
     </div>
-
-    <Form
-        v-bind="send.form()"
-        class="space-y-6 text-center"
-        v-slot="{ processing }"
-    >
-        <Button :disabled="processing" variant="secondary">
-            <Spinner v-if="processing" />
-            Resend verification email
-        </Button>
-
-        <TextLink :href="logout()" as="button" class="mx-auto block text-sm">
-            Log out
-        </TextLink>
-    </Form>
 </template>

@@ -20,47 +20,69 @@ defineProps<{
     status?: string;
 }>();
 </script>
-
 <template>
     <Head title="Forgot password" />
 
+    <!-- Status -->
     <div
         v-if="status"
-        class="mb-4 text-center text-sm font-medium text-green-600"
+        class="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-center text-sm font-medium text-green-700"
     >
         {{ status }}
     </div>
 
-    <div class="space-y-6">
-        <Form v-bind="email.form()" v-slot="{ errors, processing }">
-            <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+    <div class="space-y-4">
+        <Form
+            v-bind="email.form()"
+            v-slot="{ errors, processing }"
+            class="flex flex-col gap-4"
+        >
+            <!-- Email -->
+            <div class="grid gap-1">
+                <Label
+                    for="email"
+                    class="text-sm font-medium text-[#2d2926]"
+                >
+                    Email address
+                </Label>
+
                 <Input
                     id="email"
                     type="email"
                     name="email"
-                    autocomplete="off"
+                    autocomplete="email"
                     v-focus
                     placeholder="email@example.com"
+                    class="h-9 border-[#eadfd4] bg-[#fffaf5] text-sm text-[#2d2926] placeholder:text-[#9a918a] focus:border-[#e9784f] focus:ring-[#f4c9b8]"
                 />
+
                 <InputError :message="errors.email" />
             </div>
 
-            <div class="my-6 flex items-center justify-start">
-                <Button
-                    class="w-full"
-                    :disabled="processing"
-                    data-test="email-password-reset-link-button"
-                >
-                    <Spinner v-if="processing" />
-                    Email password reset link
-                </Button>
-            </div>
+            <!-- Submit -->
+            <Button
+                type="submit"
+                class="h-9 w-full bg-[#e9784f] text-sm font-semibold text-white hover:bg-[#d9653d]"
+                :disabled="processing"
+                data-test="email-password-reset-link-button"
+            >
+                <Spinner v-if="processing" />
+                Email password reset link
+            </Button>
         </Form>
 
-        <div class="space-x-1 text-center text-sm text-muted-foreground">
-            <span>Or, return to</span>
-            <TextLink :href="login()">log in</TextLink>
+        <!-- Return to login -->
+        <div
+            class="border-t border-[#eadfd4] pt-3 text-center text-sm text-[#625b55]"
+        >
+            <span>Or, return to </span>
+
+            <TextLink
+                :href="login()"
+                class="font-semibold text-[#e05f35] hover:text-[#d4512b]"
+            >
+                log in
+            </TextLink>
         </div>
     </div>
 </template>
