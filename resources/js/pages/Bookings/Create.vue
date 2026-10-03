@@ -106,14 +106,17 @@ const submit = () => {
     });
 };
 </script>
-
 <template>
-    <div class="min-h-screen bg-orange-50">
-        <header class="bg-orange-500 px-4 py-8 text-white">
+    <div
+        class="min-h-screen bg-orange-50 text-stone-900 dark:bg-[#1c1917] dark:text-white"
+    >
+        <header
+            class="bg-orange-500 px-4 py-8 text-white dark:bg-[#2d2926]"
+        >
             <div class="mx-auto max-w-5xl">
                 <Link
                     :href="`/events/${event.id}`"
-                    class="text-sm text-orange-100 hover:text-white"
+                    class="text-sm text-orange-100 transition hover:text-white dark:text-orange-300"
                 >
                     ← Back to event
                 </Link>
@@ -122,8 +125,9 @@ const submit = () => {
                     Book {{ event.title }}
                 </h1>
 
-                <p class="mt-2 text-orange-100">
+                <p class="mt-2 text-orange-100 dark:text-orange-200">
                     {{ formatDate(event.starts_at) }}
+
                     <span v-if="event.venue">
                         · {{ event.venue }}
                     </span>
@@ -134,8 +138,12 @@ const submit = () => {
         <main class="mx-auto max-w-5xl px-4 py-8">
             <div class="grid gap-6 lg:grid-cols-3">
                 <section class="lg:col-span-2">
-                    <div class="rounded-xl bg-white p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900">
+                    <div
+                        class="rounded-xl border border-orange-100 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-[#292524]"
+                    >
+                        <h2
+                            class="text-xl font-bold text-stone-900 dark:text-white"
+                        >
                             Select tickets
                         </h2>
 
@@ -143,32 +151,38 @@ const submit = () => {
                             <div
                                 v-for="ticket in event.ticket_types"
                                 :key="ticket.id"
-                                class="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                class="flex flex-col gap-4 rounded-lg border border-orange-100 bg-orange-50/50 p-4 transition hover:border-orange-300 sm:flex-row sm:items-center sm:justify-between dark:border-stone-700 dark:bg-[#1c1917] dark:hover:border-orange-500/50"
                             >
                                 <div>
-                                    <h3 class="font-semibold text-gray-900">
+                                    <h3
+                                        class="font-semibold text-stone-900 dark:text-white"
+                                    >
                                         {{ ticket.name }}
                                     </h3>
 
-                                    <p class="mt-1 font-medium text-orange-600">
+                                    <p
+                                        class="mt-1 font-medium text-orange-600 dark:text-orange-400"
+                                    >
                                         {{ formatPrice(ticket.price) }}
                                     </p>
 
-                                    <p class="mt-1 text-sm text-gray-500">
-                                        {{
-                                            ticket.available_quantity
-                                        }}
+                                    <p
+                                        class="mt-1 text-sm text-stone-500 dark:text-stone-400"
+                                    >
+                                        {{ ticket.available_quantity }}
                                         available
                                     </p>
                                 </div>
 
+                                <!-- Quantity controls -->
                                 <div
                                     v-if="ticket.available_quantity > 0"
                                     class="flex items-center gap-3"
                                 >
+                                    <!-- Decrement -->
                                     <button
                                         type="button"
-                                        class="h-10 w-10 rounded-lg border border-gray-300 text-lg hover:bg-gray-50 disabled:opacity-40"
+                                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-stone-300 bg-white text-lg font-semibold text-stone-700 transition hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:border-orange-500 dark:hover:bg-stone-700 dark:hover:text-orange-400"
                                         :disabled="
                                             getQuantity(ticket.id) <= 0
                                         "
@@ -177,15 +191,17 @@ const submit = () => {
                                         −
                                     </button>
 
+                                    <!-- Quantity -->
                                     <span
-                                        class="w-8 text-center font-semibold"
+                                        class="flex h-10 w-8 items-center justify-center font-semibold text-stone-900 dark:text-white"
                                     >
                                         {{ getQuantity(ticket.id) }}
                                     </span>
 
+                                    <!-- Increment -->
                                     <button
                                         type="button"
-                                        class="h-10 w-10 rounded-lg border border-gray-300 text-lg hover:bg-gray-50 disabled:opacity-40"
+                                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-stone-300 bg-white text-lg font-semibold text-stone-700 transition hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:border-orange-500 dark:hover:bg-stone-700 dark:hover:text-orange-400"
                                         :disabled="
                                             getQuantity(ticket.id) >=
                                             ticket.available_quantity
@@ -196,27 +212,34 @@ const submit = () => {
                                     </button>
                                 </div>
 
+                                <!-- Sold out -->
                                 <span
                                     v-else
-                                    class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-500"
+                                    class="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-500 dark:bg-stone-700 dark:text-stone-400"
                                 >
                                     Sold out
                                 </span>
                             </div>
                         </div>
 
+                        <!-- Validation error -->
                         <div
                             v-if="form.errors.items"
-                            class="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700"
+                            class="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
                         >
                             {{ form.errors.items }}
                         </div>
                     </div>
                 </section>
 
+                <!-- Booking summary -->
                 <aside>
-                    <div class="sticky top-6 rounded-xl bg-white p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900">
+                    <div
+                        class="sticky top-6 rounded-xl border border-orange-100 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-[#292524]"
+                    >
+                        <h2
+                            class="text-xl font-bold text-stone-900 dark:text-white"
+                        >
                             Booking summary
                         </h2>
 
@@ -229,7 +252,9 @@ const submit = () => {
                                 :key="item.ticket_type_id"
                                 class="flex justify-between gap-4 text-sm"
                             >
-                                <span class="text-gray-600">
+                                <span
+                                    class="text-stone-600 dark:text-stone-400"
+                                >
                                     {{
                                         event.ticket_types.find(
                                             (ticket) =>
@@ -240,7 +265,9 @@ const submit = () => {
                                     × {{ item.quantity }}
                                 </span>
 
-                                <span class="font-medium text-gray-900">
+                                <span
+                                    class="font-medium text-stone-900 dark:text-stone-200"
+                                >
                                     {{
                                         formatPrice(
                                             Number(
@@ -255,12 +282,21 @@ const submit = () => {
                                 </span>
                             </div>
 
-                            <div class="border-t pt-4">
+                            <div
+                                class="border-t border-stone-200 pt-4 dark:border-stone-700"
+                            >
                                 <div
                                     class="flex justify-between text-lg font-bold"
                                 >
-                                    <span>Total</span>
-                                    <span class="text-orange-600">
+                                    <span
+                                        class="text-stone-900 dark:text-white"
+                                    >
+                                        Total
+                                    </span>
+
+                                    <span
+                                        class="text-orange-600 dark:text-orange-400"
+                                    >
                                         {{ formatPrice(total) }}
                                     </span>
                                 </div>
@@ -269,7 +305,7 @@ const submit = () => {
 
                         <p
                             v-else
-                            class="mt-5 text-sm text-gray-500"
+                            class="mt-5 text-sm text-stone-500 dark:text-stone-400"
                         >
                             Select at least one ticket to continue.
                         </p>

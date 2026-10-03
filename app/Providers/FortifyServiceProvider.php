@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 /* @chisel-registration */
-
+use App\Enums\UserRole;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use App\Actions\Fortify\CreateNewUser;
 /* @end-chisel-registration */
 use App\Actions\Fortify\ResetUserPassword;
@@ -25,6 +28,18 @@ class FortifyServiceProvider extends ServiceProvider
     public function register(): void
     {
         //
+
+        $this->app->singleton(LoginResponse::class, fn () => $this->loginResponse());
+        $this->app->singleton(TwoFactorLoginResponse::class, fn () => $this->loginResponse());
+
+        $this->app->singleton(RegisterResponse::class, fn () => new class implements RegisterResponse {
+            public function toResponse($request)
+            {
+                return $request->user()?->role === Role::Organizer
+                    ? redirect()->route('dashboard')
+                    : redirect()->intended(route('events.index'));
+            }
+        });
     }
 
     /**
@@ -113,5 +128,26 @@ class FortifyServiceProvider extends ServiceProvider
             );
         });
         /* @end-chisel-passkeys */
+    }
+
+    private function loginResponse(): object
+    {
+        return new class implements LoginResponse, TwoFactorLoginResponse {
+            public function toResponse($request)
+            {
+                if ($request->user()?->role === Role::Organizer) {
+                    return redirect()->intended(route('dashboard'));
+                }
+
+                // Drop a stale "intended" dashboard URL for regular users
+                $intended = session('url.intended');
+
+                if ($intended && str_starts_with(parse_url($intended, PHP_URL_PATH) ?? '', '/dashboard')) {
+                    session()->forget('url.intended');
+                }
+
+                return redirect()->intended(route('events.index'));
+            }
+        };
     }
 }

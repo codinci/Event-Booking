@@ -23,6 +23,9 @@ Route::get('/events', [EventController::class, 'index'])
 Route::get('/events/{event}', [EventController::class, 'show'])
     ->name('events.show');
 
+Route::get('/events/{event}/book', [BookingController::class, 'create'])
+    ->name('bookings.create');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated routes
@@ -30,9 +33,6 @@ Route::get('/events/{event}', [EventController::class, 'show'])
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/events/{event}/book', [BookingController::class, 'create'])
-        ->name('bookings.create');
-
     Route::post('/events/{event}/bookings', [BookingController::class, 'store'])
         ->name('bookings.store');
 
