@@ -35,7 +35,7 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->singleton(RegisterResponse::class, fn () => new class implements RegisterResponse {
             public function toResponse($request)
             {
-                return $request->user()?->role === Role::Organizer
+                return $request->user()?->role === UserRole::Organizer
                     ? redirect()->route('dashboard')
                     : redirect()->intended(route('events.index'));
             }
@@ -135,7 +135,7 @@ class FortifyServiceProvider extends ServiceProvider
         return new class implements LoginResponse, TwoFactorLoginResponse {
             public function toResponse($request)
             {
-                if ($request->user()?->role === Role::Organizer) {
+                if ($request->user()?->role === UserRole::Organizer) {
                     return redirect()->intended(route('dashboard'));
                 }
 

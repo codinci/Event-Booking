@@ -30,7 +30,12 @@ class BookingService
             ]);
         }
 
-        $booking = DB::transaction(function () use ($user, $event, $items, $ticketTypeIds) {
+        $booking = DB::transaction(function () use (
+            $user,
+            $event,
+            $items,
+            $ticketTypeIds
+        ) {
             $ticketTypes = $event->ticketTypes()
                 ->whereIn('id', $ticketTypeIds)
                 ->lockForUpdate()
@@ -44,10 +49,13 @@ class BookingService
             }
 
             $bookingItems = [];
-            $totalAmount = 0;
+            $totalAmountCents = 0;
 
             foreach ($items as $item) {
-                $ticketType = $ticketTypes->get((int) $item['ticket_type_id']);
+                $ticketType = $ticketTypes->get(
+                    (int) $item['ticket_type_id']
+                );
+
                 $quantity = (int) $item['quantity'];
 
                 if ($quantity < 1) {
@@ -66,17 +74,20 @@ class BookingService
                     ]);
                 }
 
-                $unitPrice = (float) $ticketType->price;
-                $lineTotal = $quantity * $unitPrice;
+                $unitPriceCents = $this->toCents(
+                    $ticketType->price
+                );
+
+                $lineTotalCents = $quantity * $unitPriceCents;
 
                 $bookingItems[] = [
                     'ticket_type_id' => $ticketType->id,
                     'quantity' => $quantity,
-                    'unit_price' => $unitPrice,
-                    'total' => $lineTotal,
+                    'unit_price' => $this->fromCents($unitPriceCents),
+                    'total' => $this->fromCents($lineTotalCents),
                 ];
 
-                $totalAmount += $lineTotal;
+                $totalAmountCents += $lineTotalCents;
 
                 $ticketType->decrement(
                     'available_quantity',
@@ -88,7 +99,7 @@ class BookingService
                 'event_id' => $event->id,
                 'reference' => $this->generateReference(),
                 'status' => BookingStatus::Pending,
-                'total_amount' => $totalAmount,
+                'total_amount' => $this->fromCents($totalAmountCents),
             ]);
 
             $booking->items()->createMany($bookingItems);
@@ -99,15 +110,38 @@ class BookingService
             ]);
         });
 
-        ProcessBooking::dispatch($booking)->afterCommit();
+        ProcessBooking::dispatch($booking->id)->afterCommit();
 
         return $booking;
+    }
+
+    private function toCents(string $amount): int
+    {
+        [$whole, $decimal] = array_pad(
+            explode('.', $amount, 2),
+            2,
+            '0'
+        );
+
+        $decimal = str_pad(
+            substr($decimal, 0, 2),
+            2,
+            '0'
+        );
+
+        return ((int) $whole * 100) + (int) $decimal;
+    }
+    private function fromCents(int $cents): string
+    {
+        return intdiv($cents, 100)
+            . '.'
+            . str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 
     private function generateReference(): string
     {
         do {
-            $reference = 'BK-'.strtoupper(
+            $reference = 'BK-' . strtoupper(
                 fake()->bothify('####??####')
             );
         } while (Booking::where('reference', $reference)->exists());

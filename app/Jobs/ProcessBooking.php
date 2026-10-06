@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Booking;
+use App\Enums\BookingStatus;
+use App\Enums\PaymentStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -11,23 +13,25 @@ class ProcessBooking implements ShouldQueue
     use Queueable;
 
     public function __construct(
-        public readonly Booking $booking,
+        public int $bookingId,
     ) {}
 
     public function handle(): void
     {
-        $this->booking->loadMissing([
-            'user',
-            'event',
-            'items.ticketType',
+        $booking = Booking::findOrFail($this->bookingId);
+
+        if ($booking->status !== BookingStatus::Pending) {
+            return;
+        }
+
+        if ($booking->payment_status !== PaymentStatus::Pending) {
+            return;
+        }
+
+        $booking->update([
+            'payment_status' => PaymentStatus::Processing,
         ]);
 
-        // Post-booking processing will go here.
-        //
-        // Examples:
-        // - send confirmation email
-        // - generate ticket/QR code
-        // - notify organizer
-        // - publish booking event
+        ProcessPayment::dispatch($booking->id);
     }
 }
