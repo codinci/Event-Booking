@@ -18,12 +18,20 @@ class BookingController extends Controller
         private readonly BookingService $bookingService,
     ) {}
 
-    public function create(Event $event): Response
+    public function create(Request $request, Event $event): Response
     {
         abort_unless(
             $event->status === EventStatus::Published,
             404
         );
+
+        $pendingBooking = $request->session()->get('pending_booking');
+
+        $pendingItems = (
+            ($pendingBooking['event_id'] ?? null) == $event->id
+        )
+            ? ($pendingBooking['items'] ?? [])
+            : [];
 
         $event->load([
             'ticketTypes:id,event_id,name,price,quantity,available_quantity',
@@ -36,16 +44,20 @@ class BookingController extends Controller
                 'venue' => $event->venue,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
-                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
-                    'id' => $ticketType->id,
-                    'name' => $ticketType->name,
-                    'price' => $ticketType->price,
-                    'available_quantity' => $ticketType->available_quantity,
-                ])->values(),
+                'ticket_types' => $event->ticketTypes->map(
+                    fn ($ticketType) => [
+                        'id' => $ticketType->id,
+                        'name' => $ticketType->name,
+                        'price' => $ticketType->price,
+                        'available_quantity' => $ticketType->available_quantity,
+                    ]
+                )->values(),
             ],
+            'pendingItems' => $pendingItems,
         ]);
     }
-    public function store(Request $request, Event $event): RedirectResponse
+
+    public function store( Request $request, Event $event): RedirectResponse
     {
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
@@ -61,16 +73,35 @@ class BookingController extends Controller
             ],
         ]);
 
+        if (! $request->user()) {
+            $request->session()->put('pending_booking', [
+                'event_id' => $event->id,
+                'items' => $validated['items'],
+            ]);
+
+            $request->session()->put(
+                'url.intended',
+                route('bookings.create', $event)
+            );
+
+            return redirect()
+                ->route('login')
+                ->with('success', 'Sign in to continue your booking.');
+        }
+
         $booking = $this->bookingService->create(
             $request->user(),
             $event,
             $validated['items'],
         );
 
+        $request->session()->forget('pending_booking');
+
         return redirect()
             ->route('bookings.show', $booking)
             ->with('success', 'Your booking has been created.');
     }
+
 
     public function show(Request $request, Booking $booking): Response
     {

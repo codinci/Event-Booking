@@ -25,14 +25,17 @@ interface BookingItem {
 
 const props = defineProps<{
     event: Event;
+    pendingItems: BookingItem[];
 }>();
 
-const form = useForm<{
-    items: BookingItem[];
-}>({
+const form = useForm<{ items: BookingItem[] }>({
     items: props.event.ticket_types.map((ticket) => ({
         ticket_type_id: ticket.id,
-        quantity: 0,
+        quantity: Number(
+            props.pendingItems.find(
+                (item) => item.ticket_type_id === ticket.id,
+            )?.quantity ?? 0,
+        ),
     })),
 });
 
@@ -100,11 +103,32 @@ const formatPrice = (price: string | number) => {
     }).format(Number(price));
 };
 
+
+
 const submit = () => {
-    form.post(`/events/${props.event.id}/bookings`, {
-        preserveScroll: true,
-    });
+    const items = selectedItems.value.map((item) => ({
+        ticket_type_id: item.ticket_type_id,
+        quantity: item.quantity,
+    }));
+
+    form
+        .transform((data) => ({
+            ...data,
+            items,
+        }))
+        .post(`/events/${props.event.id}/bookings`, {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                console.log('Booking request completed successfully.');
+            },
+
+            onError: (errors) => {
+                console.error('Booking validation failed:', errors);
+            },
+        });
 };
+
 </script>
 <template>
     <div
