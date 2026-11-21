@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
+use App\Models\TicketType;
 use App\Payments\BookingCancellations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class EventController extends Controller
                 'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
-                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
+                'ticket_types' => $event->ticketTypes->map(fn (TicketType $ticketType) => [
                     'id' => $ticketType->id,
                     'name' => $ticketType->name,
                     'price' => $ticketType->price,
@@ -66,7 +67,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function store(StoreEventRequest $request)
+    public function store(StoreEventRequest $request): RedirectResponse
     {
         $this->authorize('create', Event::class);
 
@@ -107,7 +108,7 @@ class EventController extends Controller
                 'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
-                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
+                'ticket_types' => $event->ticketTypes->map(fn (TicketType $ticketType) => [
                     'id' => $ticketType->id,
                     'name' => $ticketType->name,
                     'price' => $ticketType->price,
@@ -153,7 +154,7 @@ class EventController extends Controller
                 : 'Event cancelled.');
     }
 
-    public function update(UpdateEventRequest $request, Event $event)
+    public function update(UpdateEventRequest $request, Event $event): RedirectResponse
     {
         $this->authorize('update', $event);
 
@@ -164,7 +165,7 @@ class EventController extends Controller
             ->with('success', 'Event updated successfully.');
     }
 
-    public function destroy(Event $event)
+    public function destroy(Event $event): RedirectResponse
     {
         $this->authorize('delete', $event);
 

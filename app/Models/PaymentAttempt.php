@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $refund_status
  * @property string|null $receipt_number
  * @property CarbonImmutable|null $next_check_at
+ * @property CarbonImmutable $review_at
  */
 class PaymentAttempt extends Model
 {

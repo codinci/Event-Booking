@@ -7,6 +7,7 @@ use Illuminate\Http\Client\PendingRequest;
 
 class DarajaGateway implements PaymentGateway
 {
+    /** @param array<string, mixed> $config Daraja `key`, `secret`, `shortcode` and `passkey`. */
     public function __construct(private readonly array $config) {}
 
     public function start(PaymentAttempt $attempt): ?string
@@ -44,6 +45,7 @@ class DarajaGateway implements PaymentGateway
         };
     }
 
+    /** @return array<string, string> */
     private function credentials(): array
     {
         $timestamp = now()->setTimezone('Africa/Nairobi')->format('YmdHis');

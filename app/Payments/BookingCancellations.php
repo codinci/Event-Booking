@@ -25,7 +25,7 @@ class BookingCancellations
     {
         return $booking->status === BookingStatus::Confirmed
             && $booking->payment_status === PaymentStatus::Paid
-            && $booking->event->starts_at?->isAfter(now()->addHours(config('payments.cancellation_cutoff_hours')))
+            && $booking->event->starts_at->isAfter(now()->addHours(config('payments.cancellation_cutoff_hours')))
             && $this->successfulPayment($booking) !== null;
     }
 

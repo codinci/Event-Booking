@@ -148,7 +148,9 @@ class FortifyServiceProvider extends ServiceProvider
                 // Drop a stale "intended" dashboard URL for regular users
                 $intended = session('url.intended');
 
-                if ($intended && str_starts_with(parse_url($intended, PHP_URL_PATH) ?? '', '/dashboard')) {
+                $intendedPath = $intended ? parse_url($intended, PHP_URL_PATH) : null;
+
+                if (is_string($intendedPath) && str_starts_with($intendedPath, '/dashboard')) {
                     session()->forget('url.intended');
                 }
 
