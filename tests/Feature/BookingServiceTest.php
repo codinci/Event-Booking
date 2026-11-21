@@ -11,7 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
-use App\Jobs\ProcessBooking;
 
 class BookingServiceTest extends TestCase
 {
@@ -260,7 +259,7 @@ class BookingServiceTest extends TestCase
         ]);
     }
 
-    public function test_post_booking_job_is_dispatched(): void
+    public function test_booking_waits_for_checkout_with_a_bounded_hold(): void
     {
         Queue::fake();
 
@@ -286,10 +285,8 @@ class BookingServiceTest extends TestCase
             ],
         );
 
-        Queue::assertPushed(
-            ProcessBooking::class,
-            fn (ProcessBooking $job) => $job->booking->is($booking),
-        );
+        Queue::assertNothingPushed();
+        $this->assertTrue($booking->payment_hold_expires_at->isFuture());
     }
 
     public function test_post_booking_job_is_not_dispatched_when_booking_fails(): void

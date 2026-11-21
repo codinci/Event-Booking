@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Booking;
 use App\Enums\BookingStatus;
+use App\Models\Booking;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +20,7 @@ class BookingFactory extends Factory
         return [
             'user_id' => User::factory(),
             'event_id' => Event::factory(),
-            'reference' => 'BK-' . fake()->unique()->bothify('####??####'),
+            'reference' => 'BK-'.fake()->unique()->bothify('####??####'),
             'status' => BookingStatus::Pending,
             'total_amount' => 0,
         ];

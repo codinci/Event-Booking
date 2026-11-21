@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage, usePoll } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 
 interface BookingItem {
     id: number;
@@ -24,6 +25,7 @@ interface Booking {
     id: number;
     reference: string;
     status: string;
+    payment_hold_expires_at: string | null;
     total_amount: string | number;
     created_at: string;
     event: BookingEvent;
@@ -32,7 +34,98 @@ interface Booking {
 
 const props = defineProps<{
     booking: Booking;
+    paymentGateways: Record<string, string>;
+    paymentUrl: string;
+    receiptUrl: string;
+    paymentAttempt: {
+        status: string;
+        refund_status: string | null;
+        next_check_at: string | null;
+        receipt_number: string | null;
+    } | null;
+    refund: {
+        status: string;
+        reason: 'late_payment' | 'customer_cancelled' | 'event_cancelled';
+        amount: number;
+        rejection_reason: string | null;
+    } | null;
+    cancellation: {
+        url: string;
+        refund_amount: number;
+        cutoff_hours: number;
+    } | null;
 }>();
+
+const page = usePage();
+const cancelError = computed(() => (page.props.errors as Record<string, string>).booking ?? null);
+const cancelling = ref(false);
+const cancelBooking = () => {
+    if (!props.cancellation) {
+        return;
+    }
+
+    if (confirm(`Cancel this booking? You'll be refunded ${formatPrice(props.cancellation.refund_amount)} (the ticket price minus the platform fee) to your M-PESA number once an admin approves it.`)) {
+        cancelling.value = true;
+        router.post(props.cancellation.url, {}, { preserveScroll: true, onFinish: () => (cancelling.value = false) });
+    }
+};
+
+const refundMessage = computed(() => {
+    const refund = props.refund;
+
+    if (!refund) {
+        return null;
+    }
+
+    const amount = formatPrice(refund.amount);
+    const why = {
+        late_payment: 'Your payment arrived after the reservation expired.',
+        customer_cancelled: 'You cancelled this booking.',
+        event_cancelled: 'The organizer cancelled this event.',
+    }[refund.reason];
+
+    switch (refund.status) {
+        case 'completed':
+            return `${why} ${amount} has been refunded to your M-PESA number.`;
+        case 'rejected':
+            return `${why} Your refund was declined${refund.rejection_reason ? `: ${refund.rejection_reason}` : '.'}`;
+        case 'awaiting_approval':
+            return `${why} A refund of ${amount} is waiting for approval.`;
+        default:
+            return `${why} Your refund of ${amount} is being processed.`;
+    }
+});
+
+const payment = useForm({ gateway: '', phone: import.meta.env.VITE_DARAJA_TEST_PHONE ?? '' });
+const now = ref(Date.now());
+let timer: ReturnType<typeof setInterval>;
+onMounted(() => {
+    timer = setInterval(() => (now.value = Date.now()), 1000);
+});
+onUnmounted(() => clearInterval(timer));
+const secondsUntil = (date: string | null) =>
+    date ? Math.max(0, Math.ceil((Date.parse(date) - now.value) / 1000)) : 0;
+const holdSeconds = computed(() =>
+    secondsUntil(props.booking.payment_hold_expires_at),
+);
+const waiting = computed(() =>
+    ['pending', 'review'].includes(props.paymentAttempt?.status ?? ''),
+);
+const checkSeconds = computed(() =>
+    secondsUntil(props.paymentAttempt?.next_check_at ?? null),
+);
+const { start, stop } = usePoll(
+    10000,
+    { only: ['booking', 'paymentAttempt'] },
+    { autoStart: false },
+);
+watchEffect(() => {
+    if (waiting.value || (props.booking.payment_hold_expires_at && props.booking.status === 'pending')) {
+        start();
+    } else {
+        stop();
+    }
+});
 
 const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('en-KE', {
@@ -80,6 +173,57 @@ const statusLabel = (status: string) => {
                 </div>
 
                 <div class="px-6 py-6">
+                    <a v-if="paymentAttempt?.receipt_number" :href="receiptUrl" class="mb-4 inline-block underline">
+                        View sandbox receipt
+                    </a>
+                    <p v-if="refundMessage" role="status" class="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-gray-800">
+                        {{ refundMessage }}
+                    </p>
+                    <section
+                        v-if="booking.payment_hold_expires_at && booking.status !== 'confirmed'"
+                        class="mb-6 space-y-3 rounded-lg border p-4"
+                        aria-label="Payment"
+                    >
+                        <p v-if="holdSeconds && booking.status === 'pending'">
+                            Reservation expires in {{ holdSeconds }} seconds.
+                        </p>
+                        <p v-else>This reservation has expired.</p>
+                        <p v-if="waiting" role="status">
+                            We’re still checking your payment.
+                            <span v-if="checkSeconds">Next check in {{ checkSeconds }} seconds.</span>
+                        </p>
+                        <p v-if="paymentAttempt?.status === 'review'">
+                            The payment is taking longer than expected. Contact support with your booking reference.
+                        </p>
+                        <p v-if="paymentAttempt?.status === 'failed'" role="status">
+                            The gateway reported that payment failed.
+                        </p>
+                        <form
+                            v-if="holdSeconds && booking.status === 'pending' && !waiting && Object.keys(paymentGateways).length"
+                            class="grid gap-3"
+                            @submit.prevent="payment.post(paymentUrl)"
+                        >
+                            <label class="grid gap-1">
+                                Payment method
+                                <select v-model="payment.gateway" class="rounded border p-2" required>
+                                    <option value="" disabled>Select a payment method</option>
+                                    <option v-for="(label, key) in paymentGateways" :key="key" :value="key">
+                                        {{ label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="grid gap-1">
+                                Sandbox phone number
+                                <input v-model="payment.phone" type="tel" placeholder="+254…" class="rounded border p-2" :required="payment.gateway === 'daraja'" />
+                            </label>
+                            <p v-if="payment.errors.gateway || payment.errors.phone" role="alert">
+                                {{ payment.errors.gateway || payment.errors.phone }}
+                            </p>
+                            <button type="submit" class="rounded bg-orange-700 px-4 py-2 text-white" :disabled="payment.processing">
+                                Start sandbox payment
+                            </button>
+                        </form>
+                    </section>
                     <div
                         class="rounded-lg bg-gray-50 p-4 text-center"
                     >
@@ -150,6 +294,22 @@ const statusLabel = (status: string) => {
                             </span>
                         </div>
                     </div>
+
+                    <section v-if="cancellation" class="mt-8 rounded-lg border p-4" aria-label="Cancel booking">
+                        <p class="text-sm text-gray-600">
+                            You can cancel up to {{ cancellation.cutoff_hours }} hours before the event starts and get
+                            {{ formatPrice(cancellation.refund_amount) }} back (the ticket price minus the platform fee).
+                        </p>
+                        <p v-if="cancelError" role="alert" class="mt-2 text-sm text-red-700">{{ cancelError }}</p>
+                        <button
+                            type="button"
+                            class="mt-3 rounded-lg border border-red-300 px-4 py-2 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                            :disabled="cancelling"
+                            @click="cancelBooking"
+                        >
+                            Cancel booking
+                        </button>
+                    </section>
 
                     <div
                         class="mt-8 flex flex-col gap-3 sm:flex-row"

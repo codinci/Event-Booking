@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
-use App\Jobs\ProcessBooking;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Models\User;
@@ -13,13 +12,10 @@ use Illuminate\Validation\ValidationException;
 class BookingService
 {
     /**
-     * @param array<int, array{ticket_type_id:int, quantity:int}> $items
+     * @param  array<int, array{ticket_type_id:int, quantity:int}>  $items
      */
-    public function create(
-        User $user,
-        Event $event,
-        array $items,
-    ): Booking {
+    public function create(User $user, Event $event, array $items): Booking
+    {
         $ticketTypeIds = collect($items)
             ->pluck('ticket_type_id')
             ->map(fn ($id) => (int) $id);
@@ -36,6 +32,20 @@ class BookingService
             $items,
             $ticketTypeIds
         ) {
+            // Lock the user so two simultaneous requests can't both pass the check below.
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            $existing = $user->bookings()
+                ->where('event_id', $event->id)
+                ->active()
+                ->first();
+
+            if ($existing) {
+                throw ValidationException::withMessages([
+                    'items' => "You already have a booking for this event ({$existing->reference}).",
+                ]);
+            }
+
             $ticketTypes = $event->ticketTypes()
                 ->whereIn('id', $ticketTypeIds)
                 ->lockForUpdate()
@@ -100,6 +110,7 @@ class BookingService
                 'reference' => $this->generateReference(),
                 'status' => BookingStatus::Pending,
                 'total_amount' => $this->fromCents($totalAmountCents),
+                'payment_hold_expires_at' => now()->addMinutes(config('payments.hold_minutes')),
             ]);
 
             $booking->items()->createMany($bookingItems);
@@ -109,8 +120,6 @@ class BookingService
                 'items.ticketType',
             ]);
         });
-
-        ProcessBooking::dispatch($booking->id)->afterCommit();
 
         return $booking;
     }
@@ -131,17 +140,18 @@ class BookingService
 
         return ((int) $whole * 100) + (int) $decimal;
     }
+
     private function fromCents(int $cents): string
     {
         return intdiv($cents, 100)
-            . '.'
-            . str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+            .'.'
+            .str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 
     private function generateReference(): string
     {
         do {
-            $reference = 'BK-' . strtoupper(
+            $reference = 'BK-'.strtoupper(
                 fake()->bothify('####??####')
             );
         } while (Booking::where('reference', $reference)->exists());
