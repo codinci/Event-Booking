@@ -3,20 +3,20 @@
 namespace App\Providers;
 
 /* @chisel-registration */
-use App\Enums\UserRole;
-use Laravel\Fortify\Contracts\LoginResponse;
-use Laravel\Fortify\Contracts\RegisterResponse;
-use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use App\Actions\Fortify\CreateNewUser;
-/* @end-chisel-registration */
 use App\Actions\Fortify\ResetUserPassword;
+use App\Enums\UserRole;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+/* @end-chisel-registration */
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -32,7 +32,8 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->singleton(LoginResponse::class, fn () => $this->loginResponse());
         $this->app->singleton(TwoFactorLoginResponse::class, fn () => $this->loginResponse());
 
-        $this->app->singleton(RegisterResponse::class, fn () => new class implements RegisterResponse {
+        $this->app->singleton(RegisterResponse::class, fn () => new class implements RegisterResponse
+        {
             public function toResponse($request)
             {
                 return $request->user()?->role === UserRole::Organizer
@@ -132,11 +133,16 @@ class FortifyServiceProvider extends ServiceProvider
 
     private function loginResponse(): object
     {
-        return new class implements LoginResponse, TwoFactorLoginResponse {
+        return new class implements LoginResponse, TwoFactorLoginResponse
+        {
             public function toResponse($request)
             {
                 if ($request->user()?->role === UserRole::Organizer) {
                     return redirect()->intended(route('dashboard'));
+                }
+
+                if ($request->user()?->role === UserRole::Admin) {
+                    return redirect()->intended(route('admin.refunds.index'));
                 }
 
                 // Drop a stale "intended" dashboard URL for regular users

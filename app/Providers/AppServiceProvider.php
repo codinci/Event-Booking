@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Payments\PaymentManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -15,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PaymentManager::class);
     }
 
     /**
@@ -24,6 +26,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        $publicUrl = parse_url(config('app.url'));
+
+        if (($publicUrl['scheme'] ?? null) === 'https'
+            && ($publicUrl['host'] ?? null) === request()->getHost()) {
+            URL::forceScheme('https');
+        }
     }
 
     /**

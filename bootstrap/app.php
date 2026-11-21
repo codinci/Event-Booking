@@ -1,13 +1,15 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\OrganizerMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
-use App\Enums\UserRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,14 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'organizer' => \App\Http\Middleware\OrganizerMiddleware::class,
+            'organizer' => OrganizerMiddleware::class,
+            'admin' => AdminMiddleware::class,
         ]);
 
-        $middleware->redirectUsersTo(fn (Request $request) =>
-            $request->user()?->role === UserRole::Organizer
-                ? route('dashboard')
-                : route('events.index')
-        );
+        $middleware->redirectUsersTo(fn (Request $request) => match ($request->user()?->role) {
+            UserRole::Organizer => route('dashboard'),
+            UserRole::Admin => route('admin.refunds.index'),
+            default => route('events.index'),
+        });
 
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -5,6 +5,7 @@ import type { Auth } from '@/types/auth';
 declare module 'vite/client' {
     interface ImportMetaEnv {
         readonly VITE_APP_NAME: string;
+        readonly VITE_DARAJA_TEST_PHONE?: string;
         [key: string]: string | boolean | undefined;
     }
 
