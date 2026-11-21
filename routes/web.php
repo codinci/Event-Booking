@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrganizerRequestController;
 use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\BookingCancellationController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
+use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
 use App\Http\Controllers\Organizer\EventController;
 use App\Http\Controllers\RefundCallbackController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -77,10 +79,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-// Dashboard keeps the plain `dashboard` route name the starter kit expects,
-// so it lives in its own group without the `organizer.` name prefix.
+// Organizer dashboard - uses plain `dashboard` route name the starter kit expects
 Route::middleware(['auth', 'verified', 'organizer'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::get('dashboard', [OrganizerDashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware(['auth', 'verified', 'organizer'])
@@ -106,6 +107,8 @@ Route::middleware(['auth', 'verified', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
         Route::get('organizer-requests', [OrganizerRequestController::class, 'index'])->name('organizer-requests.index');
         Route::post('organizer-requests/{user}/approve', [OrganizerRequestController::class, 'approve'])->name('organizer-requests.approve');
         Route::post('organizer-requests/{user}/reject', [OrganizerRequestController::class, 'reject'])->name('organizer-requests.reject');
