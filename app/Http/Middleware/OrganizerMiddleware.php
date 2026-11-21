@@ -12,7 +12,8 @@ class OrganizerMiddleware
         Request $request,
         Closure $next
     ): Response {
-        if (! $request->user()?->isOrganizer()) {
+        $user = $request->user();
+        if (! $user || (! $user->isOrganizer() && ! $user->isAdmin())) {
             abort(403);
         }
 

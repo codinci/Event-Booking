@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified', 'organizer'])
     ->group(function () {
         Route::get('events', [EventController::class, 'manage'])->name('events.index');
 
+        Route::post('events/{event}/publish', [EventController::class, 'publish'])->name('events.publish');
         Route::post('events/{event}/cancel', [EventController::class, 'cancel'])->name('events.cancel');
 
         Route::resource('events', EventController::class)

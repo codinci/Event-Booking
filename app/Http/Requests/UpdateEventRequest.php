@@ -8,7 +8,9 @@ class UpdateEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isOrganizer() ?? false;
+        $user = $this->user();
+
+        return $user && ($user->isOrganizer() || $user->isAdmin());
     }
 
     /** @return array<string, list<string>> */
@@ -29,6 +31,17 @@ class UpdateEventRequest extends FormRequest
                 'string',
                 'max:255',
             ],
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'image_url' => [
+                'nullable',
+                'url',
+                'starts_with:https://',
+                'max:255',
+            ],
             'starts_at' => [
                 'required',
                 'date',
@@ -37,6 +50,29 @@ class UpdateEventRequest extends FormRequest
                 'required',
                 'date',
                 'after:starts_at',
+            ],
+            'ticket_types' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'ticket_types.*.id' => [
+                'integer',
+            ],
+            'ticket_types.*.name' => [
+                'required_with:ticket_types',
+                'string',
+                'max:255',
+            ],
+            'ticket_types.*.price' => [
+                'required_with:ticket_types',
+                'numeric',
+                'min:0',
+            ],
+            'ticket_types.*.quantity' => [
+                'required_with:ticket_types',
+                'integer',
+                'min:1',
             ],
         ];
     }

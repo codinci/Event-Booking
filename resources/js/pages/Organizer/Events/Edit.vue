@@ -4,16 +4,27 @@ import CancelEventButton from '@/components/CancelEventButton.vue';
 import OrganizerEventForm from '@/components/OrganizerEventForm.vue';
 import { update } from '@/routes/organizer/events';
 
+interface TicketType {
+    id?: number;
+    name: string;
+    price: number | string;
+    quantity: number | string;
+    available_quantity?: number;
+}
+
 defineProps<{
     event: {
         id: number;
         title: string;
         description: string | null;
         venue: string;
+        location: string | null;
+        image_url: string | null;
         starts_at: string;
         ends_at: string;
         status: string;
         paid_bookings_count: number;
+        ticket_types: TicketType[];
     };
 }>();
 </script>

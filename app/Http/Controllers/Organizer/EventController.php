@@ -12,6 +12,7 @@ use App\Models\TicketType;
 use App\Payments\BookingCancellations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -71,10 +72,26 @@ class EventController extends Controller
     {
         $this->authorize('create', Event::class);
 
-        $event = Event::create([
-            ...$request->validated(),
-            'organizer_id' => $request->user()->id,
-        ]);
+        $validated = $request->validated();
+        $ticketTypes = $validated['ticket_types'];
+        unset($validated['ticket_types']);
+
+        DB::transaction(function () use ($validated, $ticketTypes, $request) {
+            $event = Event::create([
+                ...$validated,
+                'organizer_id' => $request->user()->id,
+            ]);
+
+            foreach ($ticketTypes as $type) {
+                TicketType::create([
+                    'event_id' => $event->id,
+                    'name' => $type['name'],
+                    'price' => $type['price'],
+                    'quantity' => $type['quantity'],
+                    'available_quantity' => $type['quantity'],
+                ]);
+            }
+        });
 
         return redirect()
             ->route('organizer.events.index')
@@ -127,16 +144,27 @@ class EventController extends Controller
     {
         $this->authorize('update', $event);
 
+        $event->load('ticketTypes:id,event_id,name,price,quantity,available_quantity');
+
         return Inertia::render('Organizer/Events/Edit', [
             'event' => [
                 'id' => $event->id,
                 'title' => $event->title,
                 'description' => $event->description,
                 'venue' => $event->venue,
+                'location' => $event->location,
+                'image_url' => $event->image_url,
                 'starts_at' => $event->starts_at->format('Y-m-d\TH:i:s'),
                 'ends_at' => $event->ends_at->format('Y-m-d\TH:i:s'),
                 'status' => $event->status->value,
                 'paid_bookings_count' => $event->bookings()->where('payment_status', PaymentStatus::Paid)->count(),
+                'ticket_types' => $event->ticketTypes->map(fn (TicketType $type) => [
+                    'id' => $type->id,
+                    'name' => $type->name,
+                    'price' => $type->price,
+                    'quantity' => $type->quantity,
+                    'available_quantity' => $type->available_quantity,
+                ])->values(),
             ],
         ]);
     }
@@ -158,11 +186,79 @@ class EventController extends Controller
     {
         $this->authorize('update', $event);
 
-        $event->update($request->validated());
+        $validated = $request->validated();
+        $ticketTypes = $validated['ticket_types'] ?? [];
+        unset($validated['ticket_types']);
+
+        DB::transaction(function () use ($validated, $ticketTypes, $event) {
+            $event->update($validated);
+
+            if (! empty($ticketTypes)) {
+                $existingIds = [];
+                foreach ($ticketTypes as $type) {
+                    if (isset($type['id'])) {
+                        $existingIds[] = $type['id'];
+                    }
+                }
+                $toDelete = $event->ticketTypes()->whereNotIn('id', $existingIds)->get();
+
+                foreach ($toDelete as $type) {
+                    if ($type->bookingItems()->exists()) {
+                        abort(422, "Ticket type \"{$type->name}\" has bookings and cannot be deleted.");
+                    }
+                    $type->delete();
+                }
+
+                foreach ($ticketTypes as $data) {
+                    if (isset($data['id'])) {
+                        /** @var TicketType $type */
+                        $type = TicketType::findOrFail($data['id']);
+                        $sold = $type->quantity - $type->available_quantity;
+                        $quantity = (int) ($data['quantity'] ?? 0);
+                        if ($quantity < $sold) {
+                            abort(422, "Ticket type \"{$data['name']}\" quantity cannot be less than tickets sold ($sold).");
+                        }
+                        $type->update([
+                            'name' => $data['name'],
+                            'price' => $data['price'],
+                            'quantity' => $quantity,
+                            'available_quantity' => $data['available_quantity'] ?? $type->available_quantity,
+                        ]);
+                    } else {
+                        TicketType::create([
+                            'event_id' => $event->id,
+                            'name' => $data['name'],
+                            'price' => $data['price'],
+                            'quantity' => $data['quantity'],
+                            'available_quantity' => $data['quantity'],
+                        ]);
+                    }
+                }
+            }
+        });
 
         return redirect()
             ->route('organizer.events.index')
             ->with('success', 'Event updated successfully.');
+    }
+
+    public function publish(Event $event): RedirectResponse
+    {
+        $this->authorize('publish', $event);
+
+        if ($event->ticketTypes()->doesntExist()) {
+            abort(422, 'An event must have at least one ticket type to publish.');
+        }
+
+        if ($event->starts_at->isPast()) {
+            abort(422, 'An event cannot be published if it has already started.');
+        }
+
+        $event->update(['status' => EventStatus::Published]);
+
+        return redirect()
+            ->route('organizer.events.index')
+            ->with('success', 'Event published successfully.');
     }
 
     public function destroy(Event $event): RedirectResponse

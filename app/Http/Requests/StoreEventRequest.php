@@ -8,7 +8,9 @@ class StoreEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isOrganizer() ?? false;
+        $user = $this->user();
+
+        return $user && ($user->isOrganizer() || $user->isAdmin());
     }
 
     /** @return array<string, list<string>> */
@@ -29,6 +31,17 @@ class StoreEventRequest extends FormRequest
                 'string',
                 'max:255',
             ],
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'image_url' => [
+                'nullable',
+                'url',
+                'starts_with:https://',
+                'max:255',
+            ],
             'starts_at' => [
                 'required',
                 'date',
@@ -37,6 +50,26 @@ class StoreEventRequest extends FormRequest
                 'required',
                 'date',
                 'after:starts_at',
+            ],
+            'ticket_types' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+            'ticket_types.*.name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'ticket_types.*.price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+            'ticket_types.*.quantity' => [
+                'required',
+                'integer',
+                'min:1',
             ],
         ];
     }
