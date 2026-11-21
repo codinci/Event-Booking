@@ -23,6 +23,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property UserRole $role
+ * @property Carbon|null $organizer_requested_at
+ * @property Carbon|null $organizer_rejected_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -48,6 +50,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'organizer_requested_at' => 'datetime',
+            'organizer_rejected_at' => 'datetime',
             /* @chisel-2fa */
             'two_factor_confirmed_at' => 'datetime',
             /* @end-chisel-2fa */
@@ -68,6 +72,11 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    public function hasRequestedOrganizerRole(): bool
+    {
+        return $this->organizer_requested_at !== null && $this->organizer_rejected_at === null;
     }
 
     /** @return HasMany<Booking, $this> */

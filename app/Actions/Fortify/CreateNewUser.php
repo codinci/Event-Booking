@@ -28,9 +28,8 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
-            'role' => ! empty($input['is_organizer'])
-                ? 'organizer'
-                : 'user',
+            'role' => 'user',
+            'organizer_requested_at' => ! empty($input['is_organizer']) ? now() : null,
         ]);
     }
 }
