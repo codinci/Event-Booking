@@ -15,6 +15,7 @@ interface Event {
     title: string;
     description: string | null;
     venue: string | null;
+    location: string | null;
     starts_at: string;
     ends_at: string;
     ticket_types: TicketType[];
@@ -22,6 +23,11 @@ interface Event {
 
 const props = defineProps<{
     event: Event;
+    existingBooking: {
+        id: number;
+        reference: string;
+        status: string;
+    } | null;
 }>();
 
 const availableTickets = computed(() =>
@@ -196,8 +202,26 @@ const formatPrice = (price: string | number) => {
                             Select your tickets and continue to booking.
                         </p>
 
+                        <div
+                            v-if="existingBooking"
+                            class="mt-6 rounded-lg border border-line bg-muted px-4 py-3 text-sm"
+                            role="status"
+                        >
+                            <p class="font-semibold text-foreground">You already booked this event.</p>
+                            <p class="mt-1 text-muted-foreground">
+                                Booking reference
+                                <span class="font-mono font-semibold text-foreground">{{ existingBooking.reference }}</span>
+                            </p>
+                            <Link
+                                :href="`/bookings/${existingBooking.id}`"
+                                class="mt-3 block w-full rounded-lg bg-brand px-4 py-3 text-center font-semibold text-white transition hover:bg-brand-hover"
+                            >
+                                View your booking
+                            </Link>
+                        </div>
+
                         <Link
-                            v-if="hasTickets"
+                            v-else-if="hasTickets"
                             :href="`/events/${event.id}/book`"
                             class="mt-6 block w-full rounded-lg bg-brand px-4 py-3 text-center font-semibold text-white transition hover:bg-brand-hover"
                         >

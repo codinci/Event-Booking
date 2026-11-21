@@ -3,14 +3,13 @@
 namespace Database\Factories;
 
 use App\Enums\EventStatus;
-use App\Models\User;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<Event>
  */
-
 class EventFactory extends Factory
 {
     public function definition(): array

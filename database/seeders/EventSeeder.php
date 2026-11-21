@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\EventStatus;
 use App\Models\Event;
 use App\Models\TicketType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class EventSeeder extends Seeder

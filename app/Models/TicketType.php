@@ -2,13 +2,23 @@
 
 namespace App\Models;
 
+use Database\Factories\TicketTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $event_id
+ * @property string $name
+ * @property string $price
+ * @property int $quantity
+ * @property int $available_quantity
+ */
 class TicketType extends Model
 {
+    /** @use HasFactory<TicketTypeFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -28,11 +38,13 @@ class TicketType extends Model
         ];
     }
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /** @return HasMany<BookingItem, $this> */
     public function bookingItems(): HasMany
     {
         return $this->hasMany(BookingItem::class);

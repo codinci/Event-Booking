@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, FolderGit2, LayoutGrid, Ticket, Undo2 } from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -15,15 +16,27 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as bookingsIndex } from '@/routes/bookings';
+import { index as refundsIndex } from '@/routes/admin/refunds';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const page = usePage();
+
+const myBookings: NavItem = { title: 'My bookings', href: bookingsIndex(), icon: Ticket };
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const role = page.props.auth.user?.role;
+
+    if (role === 'admin') {
+        return [{ title: 'Refunds', href: refundsIndex(), icon: Undo2 }];
+    }
+
+    if (role === 'organizer') {
+        return [{ title: 'Dashboard', href: dashboard(), icon: LayoutGrid }, myBookings];
+    }
+
+    return [myBookings];
+});
 
 const footerNavItems: NavItem[] = [
     {

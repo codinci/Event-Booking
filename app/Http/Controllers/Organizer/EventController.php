@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Organizer;
 
+use App\Enums\EventStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
+use App\Models\Event;
+use App\Models\TicketType;
+use App\Payments\BookingCancellations;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Event;
-use Illuminate\Support\Facades\Auth;
-use App\Enums\EventStatus;
-
-use App\Http\Requests\StoreEventRequest;
-use App\Http\Requests\UpdateEventRequest;
 
 class EventController extends Controller
 {
@@ -35,7 +37,7 @@ class EventController extends Controller
                 'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
-                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
+                'ticket_types' => $event->ticketTypes->map(fn (TicketType $ticketType) => [
                     'id' => $ticketType->id,
                     'name' => $ticketType->name,
                     'price' => $ticketType->price,
@@ -52,7 +54,20 @@ class EventController extends Controller
         return Inertia::render('Organizer/Events/Create');
     }
 
-    public function store(StoreEventRequest $request)
+    public function manage(Request $request): Response
+    {
+        return Inertia::render('Organizer/Events/Index', [
+            'events' => Event::query()
+                ->whereBelongsTo($request->user(), 'organizer')
+                ->select(['id', 'title', 'venue', 'status'])
+                ->withCount(['bookings as paid_bookings_count' => fn ($query) => $query->where('payment_status', PaymentStatus::Paid)])
+                ->latest('starts_at')
+                ->orderByDesc('id')
+                ->paginate(20),
+        ]);
+    }
+
+    public function store(StoreEventRequest $request): RedirectResponse
     {
         $this->authorize('create', Event::class);
 
@@ -66,7 +81,7 @@ class EventController extends Controller
             ->with('success', 'Event created successfully.');
     }
 
-    public function show(Event $event): Response
+    public function show(Request $request, Event $event): Response
     {
         abort_unless(
             $event->status === EventStatus::Published,
@@ -76,6 +91,12 @@ class EventController extends Controller
         $event->load([
             'ticketTypes:id,event_id,name,price,quantity,available_quantity',
         ]);
+
+        $existingBooking = $request->user()?->bookings()
+            ->where('event_id', $event->id)
+            ->active()
+            ->latest('id')
+            ->first();
 
         return Inertia::render('Events/Show', [
             'event' => [
@@ -87,13 +108,18 @@ class EventController extends Controller
                 'location' => $event->location,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
-                'ticket_types' => $event->ticketTypes->map(fn ($ticketType) => [
+                'ticket_types' => $event->ticketTypes->map(fn (TicketType $ticketType) => [
                     'id' => $ticketType->id,
                     'name' => $ticketType->name,
                     'price' => $ticketType->price,
                     'available_quantity' => $ticketType->available_quantity,
                 ])->values(),
             ],
+            'existingBooking' => $existingBooking ? [
+                'id' => $existingBooking->id,
+                'reference' => $existingBooking->reference,
+                'status' => $existingBooking->status->value,
+            ] : null,
         ]);
     }
 
@@ -102,11 +128,33 @@ class EventController extends Controller
         $this->authorize('update', $event);
 
         return Inertia::render('Organizer/Events/Edit', [
-            'event' => $event,
+            'event' => [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description,
+                'venue' => $event->venue,
+                'starts_at' => $event->starts_at->format('Y-m-d\TH:i:s'),
+                'ends_at' => $event->ends_at->format('Y-m-d\TH:i:s'),
+                'status' => $event->status->value,
+                'paid_bookings_count' => $event->bookings()->where('payment_status', PaymentStatus::Paid)->count(),
+            ],
         ]);
     }
 
-    public function update(UpdateEventRequest $request, Event $event)
+    public function cancel(Event $event, BookingCancellations $cancellations): RedirectResponse
+    {
+        $this->authorize('update', $event);
+
+        $refunds = $cancellations->cancelEvent($event);
+
+        return redirect()
+            ->route('organizer.events.index')
+            ->with('success', $refunds
+                ? "Event cancelled. {$refunds} paid ".str('booking')->plural($refunds).' will be refunded after admin approval.'
+                : 'Event cancelled.');
+    }
+
+    public function update(UpdateEventRequest $request, Event $event): RedirectResponse
     {
         $this->authorize('update', $event);
 
@@ -117,7 +165,7 @@ class EventController extends Controller
             ->with('success', 'Event updated successfully.');
     }
 
-    public function destroy(Event $event)
+    public function destroy(Event $event): RedirectResponse
     {
         $this->authorize('delete', $event);
 

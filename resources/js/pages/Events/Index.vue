@@ -16,6 +16,7 @@ interface Event {
     title: string;
     description: string | null;
     venue: string | null;
+    image_url: string | null;
     starts_at: string;
     ends_at: string;
     ticket_types: TicketType[];
@@ -204,4 +205,3 @@ const formatPrice = (price: number) => {
         </main>
     </div>
 </template>
-    
