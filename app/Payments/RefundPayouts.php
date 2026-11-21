@@ -82,7 +82,9 @@ class RefundPayouts
             return;
         } catch (RequestException $exception) {
             $status = $exception->response->status();
-            $rejected = $status >= 400 && $status < 500 || $exception->response->successful();
+            // A 4xx or a 2xx with a non-zero ResponseCode means Daraja refused the payout,
+            // so it is safe to fail and resend. A 5xx is unknown and goes to review.
+            $rejected = ($status >= 400 && $status < 500) || $exception->response->successful();
             $refund->transition(RefundStatus::Sending, $rejected ? RefundStatus::Failed : RefundStatus::Review, [
                 'result_code' => (string) ($exception->response->json('errorCode') ?? $exception->response->json('ResponseCode') ?? $status),
                 'result_desc' => substr((string) ($exception->response->json('errorMessage')
