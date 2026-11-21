@@ -210,7 +210,7 @@ class SandboxPaymentTest extends TestCase
     public function test_daraja_rate_limit_keeps_attempt_pending_and_defers_another_query(): void
     {
         [$booking] = $this->reserve();
-        config('payments.daraja', ['key' => 'test', 'secret' => 'test', 'shortcode' => '174379', 'passkey' => 'test']);
+        config(['payments.daraja' => ['key' => 'test', 'secret' => 'test', 'shortcode' => '174379', 'passkey' => 'test']]);
         Http::preventStrayRequests();
         Http::fake([
             'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'test-token']),
