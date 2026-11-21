@@ -20,24 +20,24 @@ class EventPolicy
 
     public function create(User $user): bool
     {
-        return $user->role === UserRole::Organizer;
+        return $user->role === UserRole::Organizer || $user->role === UserRole::Admin;
     }
 
     public function update(User $user, Event $event): bool
     {
-        return $user->role === UserRole::Organizer
-            && $event->organizer_id === $user->id;
+        return $event->organizer_id === $user->id
+            && ($user->role === UserRole::Organizer || $user->role === UserRole::Admin);
     }
 
     public function delete(User $user, Event $event): bool
     {
-        return $user->role === UserRole::Organizer
-            && $event->organizer_id === $user->id;
+        return $event->organizer_id === $user->id
+            && ($user->role === UserRole::Organizer || $user->role === UserRole::Admin);
     }
 
     public function publish(User $user, Event $event): bool
     {
-        return $user->role === UserRole::Organizer
-            && $event->organizer_id === $user->id;
+        return $event->organizer_id === $user->id
+            && ($user->role === UserRole::Organizer || $user->role === UserRole::Admin);
     }
 }

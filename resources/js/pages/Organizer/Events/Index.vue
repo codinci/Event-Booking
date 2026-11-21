@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import CancelEventButton from '@/components/CancelEventButton.vue';
-import { create, edit } from '@/routes/organizer/events';
+import { create, edit, publish } from '@/routes/organizer/events';
+import { ref } from 'vue';
 
 defineProps<{
     events: {
@@ -10,6 +11,18 @@ defineProps<{
         next_page_url: string | null;
     };
 }>();
+
+const publishingId = ref<number | null>(null);
+
+const publishEvent = (eventId: number) => {
+    const form = useForm({});
+    publishingId.value = eventId;
+    form.post(publish(eventId).url, {
+        onFinish: () => {
+            publishingId.value = null;
+        },
+    });
+};
 </script>
 
 <template>
@@ -26,15 +39,24 @@ defineProps<{
             <li v-for="event in events.data" :key="event.id" class="flex items-center justify-between gap-4 p-4">
                 <div>
                     <p class="font-medium">{{ event.title }}</p>
-                    <p class="text-sm text-muted-foreground">{{ event.venue }} · <span class="capitalize">{{ event.status }}</span></p>
+                    <p class="text-sm text-muted-foreground">{{ event.venue }} - <span class="capitalize">{{ event.status }}</span></p>
                 </div>
                 <div class="flex items-center gap-4">
                     <Link :href="edit(event.id).url" class="underline" :aria-label="`Edit ${event.title}`">Edit</Link>
+                    <button
+                        v-if="event.status === 'draft'"
+                        type="button"
+                        @click="publishEvent(event.id)"
+                        :disabled="publishingId === event.id"
+                        class="rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                        {{ publishingId === event.id ? 'Publishing...' : 'Publish' }}
+                    </button>
                     <CancelEventButton v-if="event.status !== 'cancelled'" :event="event" />
                 </div>
             </li>
         </ul>
-        <p v-else class="text-muted-foreground">You haven’t created any events yet.</p>
+        <p v-else class="text-muted-foreground">You haven't created any events yet.</p>
 
         <nav v-if="events.prev_page_url || events.next_page_url" aria-label="Event pages" class="flex gap-4">
             <Link v-if="events.prev_page_url" :href="events.prev_page_url" class="underline">Previous</Link>

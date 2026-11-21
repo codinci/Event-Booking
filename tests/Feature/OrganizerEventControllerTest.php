@@ -114,6 +114,9 @@ class OrganizerEventControllerTest extends TestCase
             'venue' => 'Nairobi Convention Centre',
             'starts_at' => '2026-11-15 09:00:00',
             'ends_at' => '2026-11-15 17:00:00',
+            'ticket_types' => [
+                ['name' => 'General', 'price' => '1000', 'quantity' => 100],
+            ],
         ];
 
         $this->actingAs($organizer)
@@ -145,6 +148,9 @@ class OrganizerEventControllerTest extends TestCase
             'venue' => 'Nairobi',
             'starts_at' => '2026-11-15 09:00:00',
             'ends_at' => '2026-11-15 17:00:00',
+            'ticket_types' => [
+                ['name' => 'General', 'price' => '1000', 'quantity' => 100],
+            ],
         ];
 
         $this->actingAs($organizer)
@@ -344,6 +350,220 @@ class OrganizerEventControllerTest extends TestCase
 
         $this->assertDatabaseHas('events', [
             'id' => $event->id,
+        ]);
+    }
+
+    public function test_organizer_can_create_event_with_ticket_types(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $data = [
+            'title' => 'Conference 2026',
+            'description' => 'A conference.',
+            'venue' => 'Nairobi',
+            'location' => 'Nairobi Convention Centre',
+            'image_url' => 'https://example.com/image.jpg',
+            'starts_at' => '2026-11-15 09:00:00',
+            'ends_at' => '2026-11-15 17:00:00',
+            'ticket_types' => [
+                ['name' => 'General', 'price' => '1000', 'quantity' => 100],
+                ['name' => 'VIP', 'price' => '2500', 'quantity' => 20],
+            ],
+        ];
+
+        $this->actingAs($organizer)
+            ->post(route('organizer.events.store'), $data)
+            ->assertRedirect(route('organizer.events.index'));
+
+        $event = Event::query()->where('title', 'Conference 2026')->first();
+        $this->assertNotNull($event);
+        $this->assertDatabaseCount('ticket_types', 2);
+        $this->assertDatabaseHas('ticket_types', [
+            'event_id' => $event->id,
+            'name' => 'General',
+            'price' => '1000.00',
+            'quantity' => 100,
+            'available_quantity' => 100,
+        ]);
+    }
+
+    public function test_organizer_cannot_create_event_without_ticket_types(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $data = [
+            'title' => 'Invalid Event',
+            'description' => 'No tickets.',
+            'venue' => 'Nairobi',
+            'starts_at' => '2026-11-15 09:00:00',
+            'ends_at' => '2026-11-15 17:00:00',
+            'ticket_types' => [],
+        ];
+
+        $this->actingAs($organizer)
+            ->post(route('organizer.events.store'), $data)
+            ->assertSessionHasErrors('ticket_types');
+    }
+
+    public function test_organizer_can_publish_event(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'status' => EventStatus::Draft,
+            'starts_at' => now()->addDay(),
+        ]);
+
+        $event->ticketTypes()->create([
+            'name' => 'General',
+            'price' => '1000',
+            'quantity' => 10,
+            'available_quantity' => 10,
+        ]);
+
+        $this->actingAs($organizer)
+            ->post(route('organizer.events.publish', $event))
+            ->assertRedirect(route('organizer.events.index'))
+            ->assertSessionHas('success', 'Event published successfully.');
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'status' => EventStatus::Published->value,
+        ]);
+    }
+
+    public function test_organizer_cannot_publish_event_without_ticket_types(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'status' => EventStatus::Draft,
+            'starts_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($organizer)
+            ->post(route('organizer.events.publish', $event))
+            ->assertStatus(422);
+    }
+
+    public function test_organizer_cannot_publish_past_event(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'status' => EventStatus::Draft,
+            'starts_at' => now()->subDay(),
+        ]);
+
+        $event->ticketTypes()->create([
+            'name' => 'General',
+            'price' => '1000',
+            'quantity' => 10,
+            'available_quantity' => 10,
+        ]);
+
+        $this->actingAs($organizer)
+            ->post(route('organizer.events.publish', $event))
+            ->assertStatus(422);
+    }
+
+    public function test_admin_can_create_event(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $data = [
+            'title' => 'Admin Event',
+            'description' => 'Created by admin.',
+            'venue' => 'Nairobi',
+            'starts_at' => '2026-11-15 09:00:00',
+            'ends_at' => '2026-11-15 17:00:00',
+            'ticket_types' => [
+                ['name' => 'General', 'price' => '1000', 'quantity' => 50],
+            ],
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('organizer.events.store'), $data)
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('events', [
+            'organizer_id' => $admin->id,
+            'title' => 'Admin Event',
+        ]);
+    }
+
+    public function test_admin_can_edit_their_own_event(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $admin->id,
+        ]);
+
+        $data = [
+            'title' => 'Updated by Admin',
+            'description' => 'Updated.',
+            'venue' => 'Updated Venue',
+            'starts_at' => '2026-12-01 09:00:00',
+            'ends_at' => '2026-12-01 17:00:00',
+        ];
+
+        $this->actingAs($admin)
+            ->put(route('organizer.events.update', $event), $data)
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'Updated by Admin',
+        ]);
+    }
+
+    public function test_admin_cannot_edit_organizers_event(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+        ]);
+
+        $data = [
+            'title' => 'Hacked',
+            'description' => 'Hacked.',
+            'venue' => 'Hacked',
+            'starts_at' => '2026-12-01 09:00:00',
+            'ends_at' => '2026-12-01 17:00:00',
+        ];
+
+        $this->actingAs($admin)
+            ->put(route('organizer.events.update', $event), $data)
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => $event->title,
         ]);
     }
 }
