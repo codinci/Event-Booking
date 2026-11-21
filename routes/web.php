@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OrganizerRequestController;
 use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\BookingCancellationController;
 use App\Http\Controllers\BookingController;
@@ -105,6 +106,10 @@ Route::middleware(['auth', 'verified', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('organizer-requests', [OrganizerRequestController::class, 'index'])->name('organizer-requests.index');
+        Route::post('organizer-requests/{user}/approve', [OrganizerRequestController::class, 'approve'])->name('organizer-requests.approve');
+        Route::post('organizer-requests/{user}/reject', [OrganizerRequestController::class, 'reject'])->name('organizer-requests.reject');
+
         Route::get('refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::post('refunds/{refund}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
         Route::post('refunds/{refund}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
