@@ -16,7 +16,7 @@ use App\Models\TicketType;
 use App\Models\User;
 use App\Payments\BookingPayments;
 use App\Payments\RefundRequests;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;

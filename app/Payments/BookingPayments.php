@@ -9,7 +9,7 @@ use App\Enums\RefundStatus;
 use App\Events\PaymentSucceeded;
 use App\Models\Booking;
 use App\Models\PaymentAttempt;
-use App\Services\ReleaseBookingTicketsService;
+use App\services\ReleaseBookingTicketsService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;

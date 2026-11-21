@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\PaymentFailed;
-use App\Services\ReleaseBookingTicketsService;
+use App\services\ReleaseBookingTicketsService;
 
 class CancelBookingAfterPaymentFailure
 {

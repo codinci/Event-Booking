@@ -13,7 +13,7 @@ use App\Payments\BookingPayments;
 use App\Payments\FakeGateway;
 use App\Payments\PaymentManager;
 use App\Payments\PaymentResult;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Event as EventBus;

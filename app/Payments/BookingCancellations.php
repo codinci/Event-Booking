@@ -9,7 +9,7 @@ use App\Enums\RefundReason;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Models\PaymentAttempt;
-use App\Services\ReleaseBookingTicketsService;
+use App\services\ReleaseBookingTicketsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

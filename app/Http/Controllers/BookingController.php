@@ -11,7 +11,7 @@ use App\Models\PaymentAttempt;
 use App\Payments\BookingCancellations;
 use App\Payments\BookingPayments;
 use App\Payments\RefundRequests;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
