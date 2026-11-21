@@ -37,6 +37,9 @@ Route::post('/events/{event}/bookings', [BookingController::class, 'store'])
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    Route::get('/bookings', [BookingController::class, 'index'])
+        ->name('bookings.index');
+
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])
         ->name('bookings.show');
 });

@@ -103,6 +103,45 @@ class BookingController extends Controller
     }
 
 
+    public function index(Request $request): Response
+    {
+        // Ordered by event date in SQL so the most recent event comes first.
+        $bookings = $request->user()->bookings()
+            ->with([
+                'event:id,title,venue,starts_at,ends_at',
+                'items.ticketType:id,name',
+            ])
+            ->join('events', 'events.id', '=', 'bookings.event_id')
+            ->orderByDesc('events.starts_at')
+            ->select('bookings.*')
+            ->get();
+
+        return Inertia::render('Bookings/Index', [
+            'bookings' => $bookings->map(fn (Booking $booking) => [
+                'id' => $booking->id,
+                'reference' => $booking->reference,
+                'status' => $booking->status->value,
+                'total_amount' => $booking->total_amount,
+                'created_at' => $booking->created_at,
+                'is_past' => ($booking->event->ends_at ?? $booking->event->starts_at)?->isPast() ?? false,
+                'event' => [
+                    'id' => $booking->event->id,
+                    'title' => $booking->event->title,
+                    'venue' => $booking->event->venue,
+                    'starts_at' => $booking->event->starts_at,
+                    'ends_at' => $booking->event->ends_at,
+                ],
+                'items' => $booking->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'quantity' => $item->quantity,
+                    'ticket_type' => [
+                        'name' => $item->ticketType->name,
+                    ],
+                ])->values(),
+            ])->values(),
+        ]);
+    }
+
     public function show(Request $request, Booking $booking): Response
     {
         abort_unless(
