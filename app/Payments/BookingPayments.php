@@ -9,7 +9,7 @@ use App\Enums\RefundStatus;
 use App\Events\PaymentSucceeded;
 use App\Models\Booking;
 use App\Models\PaymentAttempt;
-use App\Services\ReleaseBookingTicketsService;
+use App\services\ReleaseBookingTicketsService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
@@ -25,6 +25,7 @@ class BookingPayments
         private readonly RefundRequests $refunds,
     ) {}
 
+    /** @return array<string, string> Gateway key => label, for gateways usable in this environment. */
     public function gateways(): array
     {
         if (! app()->environment('local', 'testing')) {
@@ -33,7 +34,7 @@ class BookingPayments
 
         $gateways = ['fake' => 'Simulated payment'];
 
-        if (collect(config('payments.daraja'))->every(fn ($value) => filled($value))
+        if (collect(config()->array('payments.daraja'))->every(fn ($value) => filled($value))
             && str_starts_with(config('payments.daraja_callback_url') ?: config('app.url'), 'https://')) {
             $gateways['daraja'] = 'M-PESA sandbox';
         }
@@ -109,8 +110,8 @@ class BookingPayments
         $result = PaymentResult::Pending;
         $delay = 30;
         $cooldown = (int) Cache::get('payments:'.$attempt->gateway.':query-cooldown', 0);
-        if ($cooldown > now()->timestamp) {
-            $delay = $cooldown - now()->timestamp;
+        if ($cooldown > now()->getTimestamp()) {
+            $delay = $cooldown - now()->getTimestamp();
         } elseif ($attempt->provider_reference !== null) {
             try {
                 $result = $this->manager->driver($attempt->gateway)->check($attempt);
@@ -119,7 +120,7 @@ class BookingPayments
                 if ($exception->response->status() === 429) {
                     $retryAfter = $exception->response->header('Retry-After');
                     $delay = ctype_digit($retryAfter) ? max(60, (int) $retryAfter) : 120;
-                    Cache::put('payments:'.$attempt->gateway.':query-cooldown', now()->timestamp + $delay, $delay);
+                    Cache::put('payments:'.$attempt->gateway.':query-cooldown', now()->getTimestamp() + $delay, $delay);
                 }
             } catch (ConnectionException) {
                 $delay = 60;

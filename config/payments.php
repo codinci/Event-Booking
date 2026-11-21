@@ -3,6 +3,8 @@
 return [
     'hold_minutes' => max(1, (int) env('PAYMENT_HOLD_MINUTES', 5)),
     'review_minutes' => max(1, (int) env('PAYMENT_REVIEW_MINUTES', 15)),
+    // Daraja sandbox by default; set DARAJA_BASE_URL to https://api.safaricom.co.ke for live payments.
+    'daraja_base_url' => env('DARAJA_BASE_URL', 'https://sandbox.safaricom.co.ke'),
     'daraja' => [
         'key' => env('DARAJA_CONSUMER_KEY'),
         'secret' => env('DARAJA_CONSUMER_SECRET'),

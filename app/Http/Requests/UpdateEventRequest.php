@@ -11,6 +11,7 @@ class UpdateEventRequest extends FormRequest
         return $this->user()?->isOrganizer() ?? false;
     }
 
+    /** @return array<string, list<string>> */
     public function rules(): array
     {
         return [

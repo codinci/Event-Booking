@@ -6,7 +6,7 @@ use App\Enums\BookingStatus;
 use App\Models\Event;
 use App\Models\TicketType;
 use App\Models\User;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;

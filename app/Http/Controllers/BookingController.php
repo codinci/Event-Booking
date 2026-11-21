@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\EventStatus;
 use App\Enums\RefundReason;
 use App\Models\Booking;
+use App\Models\BookingItem;
 use App\Models\Event;
 use App\Models\PaymentAttempt;
 use App\Payments\BookingCancellations;
 use App\Payments\BookingPayments;
 use App\Payments\RefundRequests;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -137,7 +138,7 @@ class BookingController extends Controller
                 'status' => $booking->status->value,
                 'total_amount' => $booking->total_amount,
                 'created_at' => $booking->created_at,
-                'is_past' => ($booking->event->ends_at ?? $booking->event->starts_at)?->isPast() ?? false,
+                'is_past' => $booking->event->ends_at->isPast(),
                 'event' => [
                     'id' => $booking->event->id,
                     'title' => $booking->event->title,
@@ -145,7 +146,7 @@ class BookingController extends Controller
                     'starts_at' => $booking->event->starts_at,
                     'ends_at' => $booking->event->ends_at,
                 ],
-                'items' => $booking->items->map(fn ($item) => [
+                'items' => $booking->items->map(fn (BookingItem $item) => [
                     'id' => $item->id,
                     'quantity' => $item->quantity,
                     'ticket_type' => [
@@ -210,7 +211,7 @@ class BookingController extends Controller
                     'starts_at' => $booking->event->starts_at,
                     'ends_at' => $booking->event->ends_at,
                 ],
-                'items' => $booking->items->map(fn ($item) => [
+                'items' => $booking->items->map(fn (BookingItem $item) => [
                     'id' => $item->id,
                     'quantity' => $item->quantity,
                     'unit_price' => $item->unit_price,

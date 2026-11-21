@@ -16,7 +16,7 @@ use App\Models\TicketType;
 use App\Models\User;
 use App\Payments\BookingPayments;
 use App\Payments\RefundRequests;
-use App\Services\BookingService;
+use App\services\BookingService;
 use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -283,6 +283,29 @@ class RefundTest extends TestCase
         $this->artisan('payments:reconcile')->assertSuccessful();
 
         $this->assertSame(RefundStatus::Review, $refund->fresh()->status);
+        $this->assertSame(1, $payouts);
+    }
+
+    public function test_server_error_from_daraja_moves_refund_to_review_without_resending(): void
+    {
+        $refund = $this->openRefund(gateway: 'daraja');
+        $this->configureDaraja();
+        $payouts = 0;
+        Http::fake([
+            'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'test-token']),
+            self::B2C_URL => function () use (&$payouts) {
+                $payouts++;
+
+                return Http::response(['errorMessage' => 'Internal error'], 500);
+            },
+        ]);
+
+        $this->actingAs($this->admin())->post(route('admin.refunds.approve', $refund));
+        $this->artisan('payments:reconcile')->assertSuccessful();
+        $this->artisan('payments:reconcile')->assertSuccessful();
+
+        $refund->refresh();
+        $this->assertSame(RefundStatus::Review, $refund->status);
         $this->assertSame(1, $payouts);
     }
 

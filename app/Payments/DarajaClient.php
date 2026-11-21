@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Http;
 
 class DarajaClient
 {
-    public const URL = 'https://sandbox.safaricom.co.ke';
-
     /**
      * An authenticated request to the Daraja sandbox.
      *
@@ -17,7 +15,9 @@ class DarajaClient
      */
     public static function request(array $config): PendingRequest
     {
-        $token = Http::baseUrl(self::URL)->timeout(8)
+        $baseUrl = rtrim((string) config('payments.daraja_base_url'), '/');
+
+        $token = Http::baseUrl($baseUrl)->timeout(8)
             ->withBasicAuth($config['key'], $config['secret'])
             ->get('/oauth/v1/generate', ['grant_type' => 'client_credentials'])
             ->throw()->json('access_token');
@@ -26,7 +26,7 @@ class DarajaClient
             throw new ConnectionException('Daraja did not return an access token.');
         }
 
-        return Http::baseUrl(self::URL)->timeout(8)->withToken($token);
+        return Http::baseUrl($baseUrl)->timeout(8)->withToken($token);
     }
 
     /** The public base URL Daraja should call back to. */
