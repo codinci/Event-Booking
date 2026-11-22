@@ -20,7 +20,11 @@ class BookingPaymentController extends Controller
         $attempt = PaymentAttempt::where('booking_id', $booking->id)->where('status', 'succeeded')
             ->whereNotNull('receipt_number')->firstOrFail();
 
-        return view('bookings.receipt', ['booking' => $booking, 'attempt' => $attempt]);
+        return view('bookings.receipt', [
+            'booking' => $booking,
+            'attempt' => $attempt,
+            'backUrl' => route('bookings.show', $booking),
+        ]);
     }
 
     public function store(Request $request, Booking $booking, BookingPayments $payments): RedirectResponse

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Ticket, Undo2 } from '@lucide/vue';
+import { CalendarDays, CirclePlus, LayoutGrid, Ticket, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -17,6 +17,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as bookingsIndex } from '@/routes/bookings';
 import { index as refundsIndex } from '@/routes/admin/refunds';
+import { create as createEvent, index as eventsIndex } from '@/routes/organizer/events';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -31,7 +32,12 @@ const mainNavItems = computed<NavItem[]>(() => {
     }
 
     if (role === 'organizer') {
-        return [{ title: 'Dashboard', href: dashboard(), icon: LayoutGrid }, myBookings];
+        return [
+            { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+            { title: 'My events', href: eventsIndex(), icon: CalendarDays },
+            { title: 'Create event', href: createEvent(), icon: CirclePlus },
+            myBookings,
+        ];
     }
 
     return [myBookings];

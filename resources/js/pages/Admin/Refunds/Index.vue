@@ -88,9 +88,9 @@ const resolve = (refund: RefundRow, outcome: 'completed' | 'failed') => {
 
 <template>
     <Head title="Refunds" />
-    <main class="mx-auto w-full max-w-6xl space-y-5 px-6 py-10">
+    <main class="mx-auto w-full max-w-6xl space-y-5 px-4 py-8">
         <header class="space-y-1">
-            <h1 class="text-2xl font-semibold">Refunds</h1>
+            <h1 class="text-2xl font-bold text-foreground">Refunds</h1>
             <p class="text-sm text-muted-foreground">
                 Approved refunds are paid to the customer's M-PESA number by the scheduler within a minute.
             </p>

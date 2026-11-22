@@ -611,46 +611,31 @@ event-booking/
 - Reject modal: Rejection reason input
 - Resolve modal: M-PESA B2C transaction tracking
 
-## Screenshots to Capture
+## Screenshots
 
-The following screens should be captured and added to `docs/screenshots/`:
+### Public
 
-| # | Page | URL | Purpose |
-|---|------|-----|---------|
-| 1 | Home | `GET /` | Platform introduction |
-| 2 | Events Listing | `GET /events` | Public event browsing |
-| 3 | Event Details | `GET /events/1` | Event information and booking CTA |
-| 4 | Booking Form | `GET /events/1/book` | Ticket selection and attendee info |
-| 5 | M-PESA Payment | `POST /bookings/1/payment` | Payment gateway integration |
-| 6 | Receipt | `GET /bookings/1/receipt` | Booking confirmation |
-| 7 | My Bookings | `GET /bookings` (auth required) | User booking history |
-| 8 | Organizer Dashboard | `GET /dashboard` (organizer) | Event organizer overview |
-| 9 | Create Event | `GET /organizer/events/create` (organizer) | Event creation form |
-| 10 | Admin Dashboard | `GET /admin` (admin) | Admin overview panel |
-| 11 | Organizer Requests | `GET /admin/organizer-requests` (admin) | Approve organizers |
-| 12 | Refund Requests | `GET /admin/refunds` (admin) | Manage refunds |
+| Home | Events |
+|------|--------|
+| ![Home page](docs/screenshots/home.png) | ![Events listing](docs/screenshots/events.png) |
 
-### How to Capture Screenshots
+| Event details | Booking form |
+|---------------|--------------|
+| ![Event details](docs/screenshots/event-details.png) | ![Booking form](docs/screenshots/booking-form.png) |
 
-1. **Start the app**: `docker compose up`
-2. **Access http://localhost:8000** in your browser
-3. **Create test users** with different roles:
-   ```bash
-   # In another terminal:
-   docker compose exec app php artisan tinker
-   
-   # Create users:
-   User::factory()->create(['email' => 'user@test.com'])
-   User::factory()->admin()->create(['email' => 'admin@test.com'])
-   User::factory()->organizer()->create(['email' => 'organizer@test.com'])
-   
-   # Create test events:
-   Event::factory()->published()->create(['user_id' => 2])
-   ```
-4. **Log in** with test user credentials
-5. **Navigate** to each URL in the table above
-6. **Screenshot** each page and save to `docs/screenshots/{page-name}.png`
-7. **Commit** screenshots to the repository
+### Attendee
+
+| Payment & receipt | My bookings |
+|-------------------|-------------|
+| ![Payment and receipt](docs/screenshots/payment-receipt.png) | ![My bookings](docs/screenshots/bookings.png) |
+
+### Organizer
+
+| Dashboard | Create event |
+|-----------|--------------|
+| ![Organizer dashboard](docs/screenshots/organizer-dashboard.png) | ![Create event](docs/screenshots/create-event.png) |
+
+> Screenshots are resized to 1280px wide and palette-compressed to keep the repository light. Admin screens (dashboard, organizer requests, refunds) are not captured yet; save new ones to `docs/screenshots/{page-name}.png` the same way.
 
 ### Test Data
 - **Phone number for M-PESA**: Use `+254708374149` (from VITE_DARAJA_TEST_PHONE)

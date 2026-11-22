@@ -25,7 +25,7 @@ const cancelEvent = () => {
 <template>
     <button
         type="button"
-        class="text-destructive underline disabled:opacity-50"
+        class="rounded-lg border border-destructive/40 px-4 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
         :disabled="processing"
         :aria-label="`Cancel ${event.title}`"
         @click="cancelEvent"

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateEventRequest extends FormRequest
 {
@@ -75,5 +76,28 @@ class UpdateEventRequest extends FormRequest
                 'min:1',
             ],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $event = $this->route('event');
+            $ticketTypes = $this->input('ticket_types', []);
+
+            if (empty($ticketTypes)) {
+                return;
+            }
+
+            $existingEventTicketTypeIds = $event->ticketTypes()->pluck('id')->toArray();
+
+            foreach ($ticketTypes as $index => $type) {
+                if (isset($type['id']) && ! in_array($type['id'], $existingEventTicketTypeIds, true)) {
+                    $validator->errors()->add(
+                        "ticket_types.{$index}.id",
+                        'The selected ticket type does not belong to this event.'
+                    );
+                }
+            }
+        });
     }
 }

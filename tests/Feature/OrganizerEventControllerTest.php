@@ -566,4 +566,168 @@ class OrganizerEventControllerTest extends TestCase
             'title' => $event->title,
         ]);
     }
+
+    public function test_organizer_cannot_update_event_with_another_organizers_ticket_type(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $otherOrganizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'title' => 'My Event',
+        ]);
+
+        $otherEvent = Event::factory()->create([
+            'organizer_id' => $otherOrganizer->id,
+        ]);
+
+        $otherTicketType = $otherEvent->ticketTypes()->create([
+            'name' => 'Other Ticket',
+            'price' => '1000',
+            'quantity' => 50,
+            'available_quantity' => 50,
+        ]);
+
+        $data = [
+            'title' => 'Updated Event',
+            'description' => 'Updated.',
+            'venue' => 'Updated Venue',
+            'starts_at' => '2026-12-01 09:00:00',
+            'ends_at' => '2026-12-01 17:00:00',
+            'ticket_types' => [
+                [
+                    'id' => $otherTicketType->id,
+                    'name' => 'Hacked Ticket',
+                    'price' => '5000',
+                    'quantity' => 100,
+                ],
+            ],
+        ];
+
+        $this->actingAs($organizer)
+            ->put(route('organizer.events.update', $event), $data)
+            ->assertSessionHasErrors('ticket_types.0.id');
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'My Event',
+        ]);
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $otherTicketType->id,
+            'name' => 'Other Ticket',
+            'price' => '1000.00',
+        ]);
+    }
+
+    public function test_organizer_cannot_update_event_with_unrelated_event_ticket_type(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'title' => 'My Event',
+        ]);
+
+        $unrelatedEvent = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+        ]);
+
+        $unrelatedTicketType = $unrelatedEvent->ticketTypes()->create([
+            'name' => 'Unrelated Ticket',
+            'price' => '1000',
+            'quantity' => 50,
+            'available_quantity' => 50,
+        ]);
+
+        $data = [
+            'title' => 'Updated Event',
+            'description' => 'Updated.',
+            'venue' => 'Updated Venue',
+            'starts_at' => '2026-12-01 09:00:00',
+            'ends_at' => '2026-12-01 17:00:00',
+            'ticket_types' => [
+                [
+                    'id' => $unrelatedTicketType->id,
+                    'name' => 'Hacked Ticket',
+                    'price' => '5000',
+                    'quantity' => 100,
+                ],
+            ],
+        ];
+
+        $this->actingAs($organizer)
+            ->put(route('organizer.events.update', $event), $data)
+            ->assertSessionHasErrors('ticket_types.0.id');
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'My Event',
+        ]);
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $unrelatedTicketType->id,
+            'name' => 'Unrelated Ticket',
+        ]);
+    }
+
+    public function test_organizer_can_update_event_with_valid_ticket_types(): void
+    {
+        $organizer = User::factory()
+            ->organizer()
+            ->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'title' => 'Original Event',
+        ]);
+
+        $ticketType = $event->ticketTypes()->create([
+            'name' => 'General',
+            'price' => '1000',
+            'quantity' => 100,
+            'available_quantity' => 100,
+        ]);
+
+        $data = [
+            'title' => 'Updated Event',
+            'description' => 'Updated description.',
+            'venue' => 'Updated Venue',
+            'starts_at' => '2026-12-01 09:00:00',
+            'ends_at' => '2026-12-01 17:00:00',
+            'ticket_types' => [
+                [
+                    'id' => $ticketType->id,
+                    'name' => 'Premium',
+                    'price' => '2000',
+                    'quantity' => 150,
+                    'available_quantity' => 150,
+                ],
+            ],
+        ];
+
+        $this->actingAs($organizer)
+            ->put(route('organizer.events.update', $event), $data)
+            ->assertRedirect(route('organizer.events.index'))
+            ->assertSessionHas('success', 'Event updated successfully.');
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'Updated Event',
+        ]);
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $ticketType->id,
+            'name' => 'Premium',
+            'price' => '2000.00',
+            'quantity' => 150,
+        ]);
+    }
 }

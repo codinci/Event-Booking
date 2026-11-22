@@ -212,7 +212,7 @@ class EventController extends Controller
                 foreach ($ticketTypes as $data) {
                     if (isset($data['id'])) {
                         /** @var TicketType $type */
-                        $type = TicketType::findOrFail($data['id']);
+                        $type = $event->ticketTypes()->findOrFail($data['id']);
                         $sold = $type->quantity - $type->available_quantity;
                         $quantity = (int) ($data['quantity'] ?? 0);
                         if ($quantity < $sold) {

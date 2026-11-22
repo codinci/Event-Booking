@@ -42,3 +42,6 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+#Tasks from OpenAi
+HIGH_PRIORITY_TASKS.md

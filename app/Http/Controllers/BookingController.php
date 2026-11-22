@@ -127,11 +127,16 @@ class BookingController extends Controller
                 'items.ticketType:id,name',
             ])
             ->join('events', 'events.id', '=', 'bookings.event_id')
+            ->when(
+                $request->query('filter') === 'past',
+                fn ($query) => $query->where('events.ends_at', '<', now()),
+            )
             ->orderByDesc('events.starts_at')
             ->select('bookings.*')
             ->get();
 
         return Inertia::render('Bookings/Index', [
+            'filter' => $request->query('filter') === 'past' ? 'past' : 'all',
             'bookings' => $bookings->map(fn (Booking $booking) => [
                 'id' => $booking->id,
                 'reference' => $booking->reference,

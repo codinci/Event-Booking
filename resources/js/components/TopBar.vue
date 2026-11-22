@@ -58,7 +58,7 @@ const user = computed(() => page.props.auth?.user);
 
                     <Link
                         v-else
-                        href="/events"
+                        href="/bookings?filter=past"
                         class="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-foreground/80 transition hover:bg-hover sm:inline-block"
                     >
                         Past Events
