@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Event;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -84,7 +85,7 @@ class UpdateEventRequest extends FormRequest
             $event = $this->route('event');
             $ticketTypes = $this->input('ticket_types', []);
 
-            if (empty($ticketTypes)) {
+            if (! $event instanceof Event || empty($ticketTypes)) {
                 return;
             }
 
